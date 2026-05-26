@@ -1,0 +1,65 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS (VST3 + AU + AUv3)
+            os: macos-14
+            cmake_args: -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+          - name: Windows (VST3)
+            os: windows-2022
+            cmake_args: -A x64
+
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure CMake
+        if: hashFiles('CMakeLists.txt') != ''
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_args }}
+
+      - name: Build
+        if: hashFiles('CMakeLists.txt') != ''
+        run: cmake --build build --config Release --parallel
+
+      - name: No CMakeLists.txt yet (informational)
+        if: hashFiles('CMakeLists.txt') == ''
+        run: echo "::notice::No CMakeLists.txt found yet. CI is wired up and will build once the JUCE/CMake project is added."
+
+      - name: Upload artifacts (macOS)
+        if: runner.os == 'macOS' && hashFiles('CMakeLists.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: WON-KNOBBER-macOS
+          path: |
+            build/**/*.vst3
+            build/**/*.component
+            build/**/*.appex
+          if-no-files-found: ignore
+
+      - name: Upload artifacts (Windows)
+        if: runner.os == 'Windows' && hashFiles('CMakeLists.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: WON-KNOBBER-Windows
+          path: |
+            build/**/*.vst3
+          if-no-files-found: ignore
