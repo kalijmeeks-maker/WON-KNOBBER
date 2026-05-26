@@ -1,0 +1,7 @@
+# WON-KNOBBER code owners
+# https://docs.github.com/articles/about-code-owners
+#
+# Every file in this repo is owned by @kalijmeeks-maker by default.
+# Listed owners are automatically requested for review on PRs that touch matching files.
+
+* @kalijmeeks-maker
