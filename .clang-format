@@ -1,0 +1,27 @@
+# JUCE-compatible style
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++17
+
+BreakBeforeBraces: Allman
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 120
+PointerAlignment: Left
+AccessModifierOffset: -4
+NamespaceIndentation: None
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: false
+SpaceBeforeParens: ControlStatements
+
+SortIncludes: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<juce.*'
+    Priority: 2
+  - Regex: '^<.*'
+    Priority: 3
+  - Regex: '^".*'
+    Priority: 1

@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(cmake:*)",
+      "Bash(clang-format:*)"
+    ],
+    "deny": [
+      "Read(./build/**)",
+      "Read(./Builds/**)",
+      "Read(./JuceLibraryCode/**)",
+      "Edit(./build/**)",
+      "Edit(./Builds/**)",
+      "Edit(./JuceLibraryCode/**)",
+      "Write(./build/**)",
+      "Write(./Builds/**)",
+      "Write(./JuceLibraryCode/**)"
+    ]
+  }
+}
