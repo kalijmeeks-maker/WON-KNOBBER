@@ -1,0 +1,50 @@
+name: Feature request
+description: Suggest an idea or enhancement for WON-KNOBBER
+title: "[feat]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement! WON-KNOBBER is intentionally minimal (one knob, one job), so please explain how your idea fits that philosophy.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: When mixing drums, I find myself reaching for a second instance because...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      placeholder: Describe what you'd like the plugin to do, ideally without adding new controls.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - DSP / sound
+        - UI / rendering
+        - Plugin format / host compatibility
+        - Presets / state
+        - Performance
+        - Docs
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context, mockups, or references
+    validations:
+      required: false
