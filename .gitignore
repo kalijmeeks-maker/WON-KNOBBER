@@ -67,3 +67,52 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+
+# ---- JUCE / Plugin project additions ----
+
+# JUCE build outputs
+Builds/
+JuceLibraryCode/
+
+# CMake
+build/
+cmake-build-*/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+
+# Compiled plugin formats
+*.vst3
+*.component
+*.aaxplugin
+*.app
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.xcworkspace
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs / temp
+*.log
+*.tmp
+*.bak
+*~
+
+# Neural model checkpoints (uncomment if storing externally)
+# Resources/Models/*.bin
+# Resources/Models/*.onnx
