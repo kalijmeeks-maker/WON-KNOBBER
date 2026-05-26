@@ -1,0 +1,83 @@
+name: Bug report
+description: Report a crash, incorrect audio, or other defect in WON-KNOBBER
+title: "[bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please fill in as much detail as possible so we can reproduce the issue.
+
+        For security issues, please do **not** open a public issue — see [SECURITY.md](../../blob/main/SECURITY.md).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear and concise description of the bug.
+      placeholder: When I move the knob past 50%, the plugin produces a click...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Insert WON-KNOBBER on a stereo audio track
+        2. Set knob to ...
+        3. Play audio
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: false
+  - type: dropdown
+    id: format
+    attributes:
+      label: Plugin format
+      options:
+        - VST3
+        - AU
+        - AUv3
+        - Other / Not sure
+    validations:
+      required: true
+  - type: input
+    id: daw
+    attributes:
+      label: DAW + version
+      placeholder: e.g. Logic Pro 11.0.1, Ableton Live 12.0.5, Reaper 7.x
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system + version
+      placeholder: e.g. macOS 14.5 (Apple Silicon), Windows 11 23H2
+    validations:
+      required: true
+  - type: input
+    id: sample-rate
+    attributes:
+      label: Sample rate / buffer size
+      placeholder: e.g. 48 kHz / 128 samples
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: WON-KNOBBER version / commit
+      placeholder: e.g. 0.1.0 or commit a0ff0ef
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, crash reports, or screenshots
+      description: Paste relevant logs or drag in screenshots / short video clips.
+      render: shell
+    validations:
+      required: false
