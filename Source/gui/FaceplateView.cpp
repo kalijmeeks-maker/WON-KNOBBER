@@ -48,8 +48,8 @@ void FaceplateView::resized()
     const float sx = (float) getWidth()  / (float) kRefW;
     const float sy = (float) getHeight() / (float) kRefH;
 
-    // SATURATION knob well, measured from the render: ~290px square centred at (504, 282).
-    const auto knobRef = juce::Rectangle<int> (504 - 145, 282 - 145, 290, 290);
+    // SATURATION knob — authoritative anchor from Claude Design: centre (501, 289), draw ~230px.
+    const auto knobRef = juce::Rectangle<int> (501 - 115, 289 - 115, 230, 230);
     driveKnob.setBounds (juce::Rectangle<int> (
         juce::roundToInt ((float) knobRef.getX()     * sx),
         juce::roundToInt ((float) knobRef.getY()     * sy),
