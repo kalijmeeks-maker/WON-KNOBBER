@@ -17,7 +17,13 @@ WonKnobberAudioProcessor::WonKnobberAudioProcessor()
 
 void WonKnobberAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    saturation.prepare (sampleRate, samplesPerBlock);
+    const bool nonRealtime  = isNonRealtime();
+    const int  osFactorLog2 = nonRealtime ? 5 : 4; // 32x offline polish / 16x realtime
+    const int  numInputs    = juce::jmax (1, getTotalNumInputChannels());
+
+    saturation.prepare (sampleRate, samplesPerBlock, numInputs, osFactorLog2, nonRealtime);
+    setLatencySamples (saturation.getLatencySamples());
+
     convolution.prepare (sampleRate, samplesPerBlock);
     neuralModel.prepare (sampleRate, samplesPerBlock);
 }
