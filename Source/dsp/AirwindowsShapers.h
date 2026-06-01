@@ -36,6 +36,10 @@ namespace aw
 constexpr double kPi     = 3.14159265358979323846;
 constexpr double kHalfPi = 1.57079632679489661923;
 
+// The truncated PurestSaturation series peaks at this value (input == clamp 2.0326),
+// NOT 1.0 — so normalise by it to make the ceiling a true |y| <= 1.0 soft clip.
+constexpr double kPurestPeak = 1.2211401514585818;
+
 // Density3 — continuum saturator. density: 0..5, 1.0 == neutral (bypass).
 // <1 thins (antiderivative-style series); >1 thickens (sin() Taylor series).
 inline double density3 (double x, double density)
@@ -93,6 +97,7 @@ inline double spiralPresence (double x, double prev)
 
 // PurestSaturation — mantissa-clean sine soft-clip, used as the output guardrail.
 // The clamp is mandatory; the series only converges inside the first sine lobe.
+// Output is normalised by the series peak so this stage is a true |y| <= 1.0 ceiling.
 inline double purestSat (double x, double inGain, double outGain)
 {
     x *= inGain;
@@ -104,6 +109,7 @@ inline double purestSat (double x, double inGain, double outGain)
     x -= t * 0.000244140625;     t *= X;
     x += t * 3.814697265625e-6;  t *= X;
     x -= t * 2.98023223876953125e-8;
+    x /= kPurestPeak;
     return x * (outGain < 1.0 ? outGain : 1.0);
 }
 } // namespace aw
