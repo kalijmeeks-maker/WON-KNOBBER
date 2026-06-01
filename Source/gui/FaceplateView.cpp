@@ -14,7 +14,7 @@ FaceplateView::FaceplateView()
         BinaryData::faceplate_pro_960x600_png, BinaryData::faceplate_pro_960x600_pngSize);
 
     knobLnf.setFilmstrip (juce::ImageCache::getFromMemory (
-        BinaryData::knob_anodize_black_256_png, BinaryData::knob_anodize_black_256_pngSize));
+        BinaryData::knob_diamond_256_png, BinaryData::knob_diamond_256_pngSize));
 
     driveKnob.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     driveKnob.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);

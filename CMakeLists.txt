@@ -44,7 +44,7 @@ target_sources(WonKnobber PRIVATE ${WK_SOURCES})
 
 # ---- Embedded binary assets (knob filmstrip + PRO faceplate chassis) ----
 juce_add_binary_data(WonKnobberBinaryData SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_anodize_black_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x600.png"
 )
 
