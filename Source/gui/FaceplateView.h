@@ -1,5 +1,6 @@
 /*
-    FaceplateView.h — root container: draws faceplate SVG, lays out knob/meter/LED
+    FaceplateView.h — root container: draws the photoreal PRO chassis (960x600 PNG)
+    and seats the hero filmstrip knob in the SATURATION well.
     WON-KNOBBER · part of the gui layer
 */
 #pragma once
@@ -24,14 +25,14 @@ public:
     BypassLED& getBypassLED() { return bypassLed; }
 
 private:
-    void drawEngraved (juce::Graphics& g, const juce::String& text,
-                       juce::Rectangle<int> area, float fontSize) const;
+    // Design reference is the 960x600 PRO chassis; controls are placed in its coords.
+    static constexpr int kRefW = 960;
+    static constexpr int kRefH = 600;
 
     KnobLookAndFeel knobLnf;
     juce::Slider driveKnob;
-    VUMeter vuMeter;
-    BypassLED bypassLed;
+    VUMeter vuMeter;     // Phase 2: live I/O meters (not shown yet)
+    BypassLED bypassLed; // Phase 2: live bypass telltale (not shown yet)
 
-    // layout rects shared between resized() and paint()
-    juce::Rectangle<int> knobArea, brandArea, satLabelArea, minMaxArea;
+    juce::Image faceplate; // embedded photoreal chassis (BinaryData)
 };
