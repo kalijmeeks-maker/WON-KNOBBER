@@ -1,5 +1,5 @@
 /*
-    KnobLookAndFeel.h — LookAndFeel_V4 that renders the knob from a 128-frame filmstrip PNG
+    KnobLookAndFeel.h — LookAndFeel_V4 that renders the knob from a 120-frame filmstrip PNG
     WON-KNOBBER · part of the gui layer
 */
 #pragma once
@@ -18,6 +18,6 @@ public:
     void setFilmstrip (const juce::Image& strip) { filmstrip = strip; }
 
 private:
-    static constexpr int numFrames = 128;
-    juce::Image filmstrip; // TODO: load from BinaryData (tall PNG, 128 vertical frames)
+    static constexpr int numFrames = 120; // Blender renders are 120-frame strips (256x30720)
+    juce::Image filmstrip;
 };

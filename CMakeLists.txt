@@ -42,6 +42,12 @@ file(GLOB_RECURSE WK_SOURCES CONFIGURE_DEPENDS
 )
 target_sources(WonKnobber PRIVATE ${WK_SOURCES})
 
+# ---- Embedded binary assets (knob filmstrip + PRO faceplate chassis) ----
+juce_add_binary_data(WonKnobberBinaryData SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x600.png"
+)
+
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
 
 target_compile_definitions(WonKnobber PUBLIC
@@ -52,6 +58,7 @@ target_compile_definitions(WonKnobber PUBLIC
 
 target_link_libraries(WonKnobber
     PRIVATE
+        WonKnobberBinaryData
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC
