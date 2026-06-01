@@ -7,8 +7,10 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
                                         float sliderPosProportional, float rotaryStartAngle,
                                         float rotaryEndAngle, juce::Slider& slider)
 {
-    juce::ignoreUnused (rotaryStartAngle, rotaryEndAngle, slider);
+    juce::ignoreUnused (slider);
     const auto bounds = juce::Rectangle<int> (x, y, width, height);
+    const int  side   = juce::jmin (width, height);
+    const auto centre = bounds.getCentre().toFloat();
 
     if (filmstrip.isValid())
     {
@@ -17,7 +19,6 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
                                              (int) std::round (sliderPosProportional * (numFrames - 1)));
 
         // Square dest centred in the slider bounds (keeps the knob's aspect ratio).
-        const int side = juce::jmin (width, height);
         const auto dest = juce::Rectangle<int> (0, 0, side, side).withCentre (bounds.getCentre());
 
         g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
@@ -33,4 +34,15 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
         g.setColour (juce::Colour (0xffffb14e));
         g.drawEllipse (bounds.toFloat().reduced (2.0f), 2.0f);
     }
+
+    // Amber value-arc around the knob (the diamond has no painted indicator).
+    const float r       = (float) side * 0.5f * 0.96f;
+    const float toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
+    juce::Path track, arc;
+    track.addCentredArc (centre.x, centre.y, r, r, 0.0f, rotaryStartAngle, rotaryEndAngle, true);
+    arc.addCentredArc   (centre.x, centre.y, r, r, 0.0f, rotaryStartAngle, toAngle, true);
+    g.setColour (juce::Colours::black.withAlpha (0.35f));
+    g.strokePath (track, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.setColour (juce::Colour (0xffFE9A00));
+    g.strokePath (arc, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }

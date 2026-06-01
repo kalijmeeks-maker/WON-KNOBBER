@@ -21,8 +21,10 @@ FaceplateView::FaceplateView()
     driveKnob.setRange (0.0, 1.0, 0.0);
     driveKnob.setLookAndFeel (&knobLnf);
 
+    addAndMakeVisible (transferCurve);
+    addAndMakeVisible (harmonicBars);
     addAndMakeVisible (driveKnob);
-    // vuMeter / bypassLed: Phase 2 — not drawn over the photoreal chassis yet.
+    // vuMeter / bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
 
 FaceplateView::~FaceplateView()
@@ -48,11 +50,17 @@ void FaceplateView::resized()
     const float sx = (float) getWidth()  / (float) kRefW;
     const float sy = (float) getHeight() / (float) kRefH;
 
-    // SATURATION knob — authoritative anchor from Claude Design: centre (501, 289), draw ~230px.
-    const auto knobRef = juce::Rectangle<int> (501 - 115, 289 - 115, 230, 230);
-    driveKnob.setBounds (juce::Rectangle<int> (
-        juce::roundToInt ((float) knobRef.getX()     * sx),
-        juce::roundToInt ((float) knobRef.getY()     * sy),
-        juce::roundToInt ((float) knobRef.getWidth()  * sx),
-        juce::roundToInt ((float) knobRef.getHeight() * sy)));
+    // Map a 960x600 reference rect [x,y,w,h] onto the actual size.
+    auto place = [sx, sy] (int rx, int ry, int rw, int rh)
+    {
+        return juce::Rectangle<int> (juce::roundToInt ((float) rx * sx),
+                                     juce::roundToInt ((float) ry * sy),
+                                     juce::roundToInt ((float) rw * sx),
+                                     juce::roundToInt ((float) rh * sy));
+    };
+
+    // Authoritative anchors from Claude Design (faceplate-pro-anchors.json, 960x600).
+    transferCurve.setBounds (place (57, 168, 240, 240));   // transfer_panel
+    harmonicBars.setBounds  (place (705, 168, 240, 166));  // harmonics_panel
+    driveKnob.setBounds     (place (501 - 115, 289 - 115, 230, 230)); // hero_knob_well, centre (501,289)
 }
