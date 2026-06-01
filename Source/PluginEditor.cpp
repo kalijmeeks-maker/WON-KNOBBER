@@ -19,7 +19,7 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor (WonKnobberAudioP
         };
     }
 
-    setSize (480, 180);
+    setSize (520, 340);
 }
 
 void WonKnobberAudioProcessorEditor::paint (juce::Graphics& g)

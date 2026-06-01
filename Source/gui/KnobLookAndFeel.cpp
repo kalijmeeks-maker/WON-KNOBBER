@@ -15,8 +15,15 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
         const int frameHeight = filmstrip.getHeight() / numFrames;
         const int frameIndex = juce::jlimit (0, numFrames - 1,
                                              (int) std::round (sliderPosProportional * (numFrames - 1)));
-        // TODO: blit source rect (0, frameIndex*frameHeight, width, frameHeight) into bounds.
-        juce::ignoreUnused (frameHeight, frameIndex);
+
+        // Square dest centred in the slider bounds (keeps the knob's aspect ratio).
+        const int side = juce::jmin (width, height);
+        const auto dest = juce::Rectangle<int> (0, 0, side, side).withCentre (bounds.getCentre());
+
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (filmstrip,
+                     dest.getX(), dest.getY(), dest.getWidth(), dest.getHeight(),
+                     0, frameIndex * frameHeight, filmstrip.getWidth(), frameHeight);
     }
     else
     {

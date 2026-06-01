@@ -42,6 +42,11 @@ file(GLOB_RECURSE WK_SOURCES CONFIGURE_DEPENDS
 )
 target_sources(WonKnobber PRIVATE ${WK_SOURCES})
 
+# ---- Embedded binary assets (knob filmstrip) ----
+juce_add_binary_data(WonKnobberBinaryData SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_anodize_black_256.png"
+)
+
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
 
 target_compile_definitions(WonKnobber PUBLIC
@@ -52,6 +57,7 @@ target_compile_definitions(WonKnobber PUBLIC
 
 target_link_libraries(WonKnobber
     PRIVATE
+        WonKnobberBinaryData
         juce::juce_audio_utils
         juce::juce_dsp
     PUBLIC

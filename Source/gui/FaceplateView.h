@@ -24,9 +24,14 @@ public:
     BypassLED& getBypassLED() { return bypassLed; }
 
 private:
+    void drawEngraved (juce::Graphics& g, const juce::String& text,
+                       juce::Rectangle<int> area, float fontSize) const;
+
     KnobLookAndFeel knobLnf;
     juce::Slider driveKnob;
     VUMeter vuMeter;
     BypassLED bypassLed;
-    // TODO: std::unique_ptr<juce::Drawable> faceplateSvg loaded from BinaryData.
+
+    // layout rects shared between resized() and paint()
+    juce::Rectangle<int> knobArea, brandArea, satLabelArea, minMaxArea;
 };
