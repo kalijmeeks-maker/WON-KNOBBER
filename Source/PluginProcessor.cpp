@@ -30,6 +30,9 @@ void WonKnobberAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
     setLatencySamples(saturation.getLatencySamples());
 
     convolution.prepare(sampleRate, samplesPerBlock);
+    convolution.setEngaged(cabEngage);
+    if (cabEngage)
+        convolution.setIr(currentCabIr); // re-apply IR for the (possibly new) sample rate
     neuralModel.prepare(sampleRate, samplesPerBlock);
 
     // Size dry scratch defensively (prepare block can be smaller than later processBlock blocks in some hosts/offline).
@@ -159,6 +162,12 @@ void WonKnobberAudioProcessor::applyStateToParams(const WonKnobberState& st) noe
     currentNeuralModel = st.neuralModel;
     cabEngage = st.cabEngage;
     neuralEngage = st.neuralEngage;
+
+    // Reflect cab selection into the convolution stage (message thread). The engage gate is atomic
+    // and the IR load is queued wait-free by JUCE. Neural wiring lands in a later PR.
+    convolution.setEngaged(cabEngage);
+    if (cabEngage)
+        convolution.setIr(currentCabIr);
 }
 
 void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept

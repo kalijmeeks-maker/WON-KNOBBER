@@ -63,6 +63,12 @@ juce_add_binary_data(WonKnobberBinaryData SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/tube_warm.xml"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/diode_bite.xml"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/transformer.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_flat.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_studio_ribbon.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_vintage_4x12.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_console_box.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_old_radio.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_iron_core.wav"
 )
 
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
