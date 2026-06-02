@@ -64,6 +64,23 @@ public:
     bool getBypassState() const noexcept { return bypassState; }
     void setBypassState(bool shouldBypass) { bypassState = shouldBypass; }
 
+    // Phase 2b: minimal factory preset API (embedded via BinaryData; 2 presets for this slice).
+    int getNumFactoryPresets() const;
+    juce::String getFactoryPresetName(int i) const;
+    void loadFactoryPreset(int i); // parses xml, applyState (resets slots + active=A)
+
+    // Phase 2b: A/B compare slots (in-memory; saved in host state via slots in VT).
+    char getActiveSlot() const;
+    void setActiveSlot(
+        char which); // 'A'/'B': save outgoing live to its slot, apply target slot to live, update active. Instant.
+    void copySlot(char src, char dst);
+
+    // Phase 2b: transport affordances wired to in-memory slots (no disk; file I/O later phase).
+    void saveToActiveSlot();
+    void loadFromActiveSlot();
+    void undoLast();
+    void randomizeParameters();
+
     // Atomically read the latest per-block linear peaks across all 4 channels and
     // reset the audio-thread accumulators to 0. Called from the GUI timer (~30 Hz);
     // every block's peak is captured because reads of 0 between blocks just leave
@@ -78,6 +95,7 @@ private:
     bool bypassState{false}; // future rocker; persisted; default false (chain not bypassed)
     WonKnobberState slotA;   // A/B slots for future transport; initialised to current; round-tripped via host state
     WonKnobberState slotB;
+    char activeSlot{'A'}; // current compare slot; 'A' or 'B'; transient (not in state blob)
 
     Saturation saturation;
     Convolution convolution;
@@ -95,8 +113,12 @@ private:
     // Builds a WonKnobberState snapshot from live params + variant + bypass (for getState + slot init).
     WonKnobberState getCurrentState() const noexcept;
 
-    // Single source apply (drive/variant/mix/bypass + init both slots). Called from set paths + ctor.
+    // Single source apply (drive/variant/mix/bypass + init both slots + active=A). Called from set paths + ctor +
+    // factory.
     void applyState(const WonKnobberState& st) noexcept;
+
+    // Apply only to live params/variant (no touch to slots or active). Used by A/B switch/load-from-slot.
+    void applyStateToParams(const WonKnobberState& st) noexcept;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WonKnobberAudioProcessor)
 };

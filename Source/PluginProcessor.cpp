@@ -3,6 +3,7 @@
 */
 #include "PluginProcessor.h"
 
+#include "BinaryData.h"
 #include "PluginEditor.h"
 #include "util/Parameters.h"
 
@@ -142,7 +143,7 @@ WonKnobberState WonKnobberAudioProcessor::getCurrentState() const noexcept
     return s;
 }
 
-void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
+void WonKnobberAudioProcessor::applyStateToParams(const WonKnobberState& st) noexcept
 {
     if (drive != nullptr)
         *drive = st.drive;
@@ -150,9 +151,130 @@ void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
     if (mix != nullptr)
         *mix = st.mix;
     bypassState = st.bypass;
+}
 
+void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
+{
+    applyStateToParams(st);
     slotA = st;
     slotB = st;
+    activeSlot = 'A';
+}
+
+int WonKnobberAudioProcessor::getNumFactoryPresets() const
+{
+    return 2;
+}
+
+juce::String WonKnobberAudioProcessor::getFactoryPresetName(int i) const
+{
+    if (i == 0)
+        return "Default";
+    if (i == 1)
+        return "Hot";
+    return {};
+}
+
+void WonKnobberAudioProcessor::loadFactoryPreset(int i)
+{
+    if (i < 0 || i >= getNumFactoryPresets())
+        return;
+
+    juce::String xmlText;
+    if (i == 0)
+        xmlText = juce::String::fromUTF8(BinaryData::Default_xml, BinaryData::Default_xmlSize);
+    else if (i == 1)
+        xmlText = juce::String::fromUTF8(BinaryData::Hot_xml, BinaryData::Hot_xmlSize);
+    else
+        return;
+
+    if (auto xml = juce::XmlDocument::parse(xmlText))
+    {
+        auto vt = juce::ValueTree::fromXml(*xml);
+        WonKnobberState st = WonKnobberState::fromValueTree(vt);
+        applyState(st);
+    }
+}
+
+char WonKnobberAudioProcessor::getActiveSlot() const
+{
+    return activeSlot;
+}
+
+void WonKnobberAudioProcessor::setActiveSlot(char which)
+{
+    which = static_cast<char>(juce::CharacterFunctions::toUpperCase(static_cast<juce::juce_wchar>(which)));
+    if (which != 'A' && which != 'B')
+        return;
+    if (which == activeSlot)
+        return;
+
+    // Save outgoing live values to the outgoing slot (compare semantics: do not lose tweaks on switch).
+    WonKnobberState curr = getCurrentState();
+    if (activeSlot == 'A')
+        slotA = curr;
+    else
+        slotB = curr;
+
+    // Apply target slot to live params (no clobber of slots).
+    const WonKnobberState& target = (which == 'A' ? slotA : slotB);
+    applyStateToParams(target);
+    activeSlot = which;
+}
+
+void WonKnobberAudioProcessor::copySlot(char src, char dst)
+{
+    src = static_cast<char>(juce::CharacterFunctions::toUpperCase(static_cast<juce::juce_wchar>(src)));
+    dst = static_cast<char>(juce::CharacterFunctions::toUpperCase(static_cast<juce::juce_wchar>(dst)));
+    if (src != 'A' && src != 'B')
+        return;
+    if (dst != 'A' && dst != 'B')
+        return;
+    if (src == dst)
+        return;
+
+    if (src == 'A')
+        slotB = slotA;
+    else
+        slotA = slotB;
+}
+
+void WonKnobberAudioProcessor::saveToActiveSlot()
+{
+    WonKnobberState curr = getCurrentState();
+    if (activeSlot == 'A')
+        slotA = curr;
+    else
+        slotB = curr;
+}
+
+void WonKnobberAudioProcessor::loadFromActiveSlot()
+{
+    const WonKnobberState& s = (activeSlot == 'A' ? slotA : slotB);
+    applyStateToParams(s);
+}
+
+void WonKnobberAudioProcessor::undoLast()
+{
+    // Revert active by switching to the other slot without saving current live (true undo of last switch/tweak).
+    char other = (activeSlot == 'A' ? 'B' : 'A');
+    const WonKnobberState& target = (other == 'A' ? slotA : slotB);
+    applyStateToParams(target);
+    activeSlot = other;
+}
+
+void WonKnobberAudioProcessor::randomizeParameters()
+{
+    // UI thread only (message thread). Not called from audio.
+    auto& rng = juce::Random::getSystemRandom();
+    if (drive != nullptr)
+        *drive = rng.nextFloat();
+    if (mix != nullptr)
+        *mix = rng.nextFloat();
+
+    static const juce::StringArray variants{"diamond", "onyx", "sapphire", "emerald", "ruby", "amethyst", "citrine"};
+    currentVariant = variants[rng.nextInt(variants.size())];
+    // bypass left as-is
 }
 
 juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()
@@ -244,6 +366,8 @@ void WonKnobberAudioProcessor::setStateInformation(const void* data, int sizeInB
                     }
                 }
             }
+
+            activeSlot = 'A';
         }
         // If parse fails, fall through to defaults (sanitised below via fromValueTree path).
     }
@@ -255,6 +379,8 @@ void WonKnobberAudioProcessor::setStateInformation(const void* data, int sizeInB
         applyState(leg);
     }
 
+    activeSlot = 'A';
+
     // Extra trailing data ignored. All paths above already sanitised (isfinite + jlimit).
     // Old states always yield bypass=false, mix=1.0 where absent, variant preserved, drive ok.
 }
@@ -264,3 +390,123 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new WonKnobberAudioProcessor();
 }
+
+//==============================================================================
+// Self-tests for Phase 2b preset strip + transport API (run at static init / dlopen of plugin).
+// Mirrors the style + visibility of WonKnobberState unit tests. Exercises factory load, A/B
+// save-on-switch, copy, transport save/load/undo/randomize. Output on stdout for build/qa logs.
+namespace
+{
+static bool runPresetTransportAPITests()
+{
+    bool pass = true;
+
+    WonKnobberAudioProcessor proc;
+
+    // num + names
+    {
+        int n = proc.getNumFactoryPresets();
+        bool nOk = (n == 2);
+        std::cout << "PRESET API [numFactory]: " << (nOk ? "PASS" : "FAIL") << " n=" << n << std::endl;
+        if (!nOk)
+            pass = false;
+
+        juce::String n0 = proc.getFactoryPresetName(0);
+        juce::String n1 = proc.getFactoryPresetName(1);
+        bool namesOk = (n0 == "Default" && n1 == "Hot");
+        std::cout << "PRESET API [names]: " << (namesOk ? "PASS" : "FAIL") << " 0=" << n0 << " 1=" << n1 << std::endl;
+        if (!namesOk)
+            pass = false;
+    }
+
+    // load factory (Hot has drive~0.7 variant=ruby)
+    {
+        proc.loadFactoryPreset(1);
+        float ld = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+        auto lv = proc.getCurrentVariant();
+        bool loadOk = (std::abs(ld - 0.7f) < 0.01f && lv == "ruby");
+        std::cout << "PRESET API [load Hot]: " << (loadOk ? "PASS" : "FAIL") << " drive=" << ld << " var=" << lv
+                  << std::endl;
+        if (!loadOk)
+            pass = false;
+    }
+
+    // active init after load
+    {
+        char act = proc.getActiveSlot();
+        bool actOk = (act == 'A');
+        std::cout << "PRESET API [active after factory]: " << (actOk ? "PASS" : "FAIL") << " act=" << act << std::endl;
+        if (!actOk)
+            pass = false;
+    }
+
+    // A/B switch saves outgoing, applies target
+    {
+        // from Hot on A, tweak live, switch to B (saves tweak to A, live gets B's ~0.7)
+        if (auto* d = proc.getDriveParameter())
+            *d = 0.42f;
+        proc.setActiveSlot('B');
+        float liveD = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+        bool toBOK = (proc.getActiveSlot() == 'B' && std::abs(liveD - 0.7f) < 0.01f);
+        // now switch back to A: should get the saved 0.42
+        proc.setActiveSlot('A');
+        liveD = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+        bool savedOK = (std::abs(liveD - 0.42f) < 0.01f && proc.getActiveSlot() == 'A');
+        bool abOK = toBOK && savedOK;
+        std::cout << "PRESET API [AB switch+save]: " << (abOK ? "PASS" : "FAIL") << std::endl;
+        if (!abOK)
+            pass = false;
+    }
+
+    // copySlot
+    {
+        proc.copySlot('A', 'B');
+        proc.setActiveSlot('B');
+        float liveD = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+        bool cOK = (std::abs(liveD - 0.42f) < 0.01f);
+        std::cout << "PRESET API [copySlot]: " << (cOK ? "PASS" : "FAIL") << std::endl;
+        if (!cOK)
+            pass = false;
+    }
+
+    // transport: save to active, randomize, loadFrom restores the saved
+    {
+        if (auto* d = proc.getDriveParameter())
+            *d = 0.99f;
+        proc.saveToActiveSlot();
+        float savedDrive = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+
+        proc.randomizeParameters();
+        float postR = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+        bool rOK = (std::abs(postR - savedDrive) > 0.001f); // almost always
+        std::cout << "PRESET API [randomize]: " << (rOK ? "PASS" : "FAIL") << " pre=" << savedDrive << " post=" << postR
+                  << std::endl;
+        if (!rOK)
+            pass = false;
+
+        proc.loadFromActiveSlot();
+        float postL = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
+        bool lOK = (std::abs(postL - savedDrive) < 0.001f);
+        std::cout << "PRESET API [save/load slot]: " << (lOK ? "PASS" : "FAIL") << std::endl;
+        if (!lOK)
+            pass = false;
+    }
+
+    // undoLast
+    {
+        char before = proc.getActiveSlot();
+        proc.undoLast();
+        char after = proc.getActiveSlot();
+        bool uOK = (after != before);
+        std::cout << "PRESET API [undoLast]: " << (uOK ? "PASS" : "FAIL") << " " << before << "->" << after
+                  << std::endl;
+        if (!uOK)
+            pass = false;
+    }
+
+    std::cout << "PRESET TRANSPORT API TESTS OVERALL: " << (pass ? "PASS" : "FAIL") << std::endl;
+    return pass;
+}
+
+static const bool presetAPITestsRan = runPresetTransportAPITests();
+} // namespace
