@@ -7,4 +7,5 @@
 namespace ParamIDs
 {
     constexpr auto drive = "drive";
+    constexpr auto mix = "mix";
 }

@@ -23,6 +23,17 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor (WonKnobberAudioP
         faceplate.setDrive (driveParam->get());
     }
 
+    auto& mixKnob = faceplate.getMixKnob();
+    if (auto* mixParam = processorRef.getMixParameter())
+    {
+        mixKnob.setValue (mixParam->get(), juce::dontSendNotification);
+        mixKnob.onValueChange = [this, &mixKnob, mixParam]
+        {
+            *mixParam = (float) mixKnob.getValue();
+            juce::ignoreUnused (this);
+        };
+    }
+
     // Restore the persisted stone (defaults to "diamond" on a fresh load) and
     // let the chip write any future picker change back to the processor.
     faceplate.setVariant (processorRef.getCurrentVariant());
@@ -44,6 +55,14 @@ void WonKnobberAudioProcessorEditor::timerCallback()
         if (std::abs ((float) knob.getValue() - d) > 1.0e-4f)
             knob.setValue (d, juce::dontSendNotification); // reflect host automation on knob + arc
         faceplate.setDrive (d);
+    }
+
+    if (auto* mixParam = processorRef.getMixParameter())
+    {
+        auto& knob = faceplate.getMixKnob();
+        const float m = mixParam->get();
+        if (std::abs ((float) knob.getValue() - m) > 1.0e-4f)
+            knob.setValue (m, juce::dontSendNotification);
     }
 
     // Drain the audio-thread peak accumulators and feed them to the I/O meter
