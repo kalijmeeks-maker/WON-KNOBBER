@@ -11,3 +11,5 @@ Supporting spikes:
 - `~/Dev/won-knobber-design/uploads/WON_RTNeural_vs_ONNX_spike_2026-06-02.md`
 
 **Do not wire** cab/neural against guessed filenames — use the JSON manifest `filename` and `binary_data_symbol` fields.
+
+**Tracking PR:** [#40](https://github.com/kalijmeeks-maker/WON-KNOBBER/pull/40) (`feat/cab-neural-assets-manifest`) — placeholder WAV/JSON on branch; CC stacks state + conv + RTNeural embed against manifest symbols.
