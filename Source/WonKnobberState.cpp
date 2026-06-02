@@ -275,37 +275,28 @@ static bool runFactoryEmbedTests()
         auto genXml = defSt.toValueTree().createXml()->toString();
         std::cout << "GENERATED_XML_DEFAULT_START>>>" << genXml << "<<<GENERATED_XML_DEFAULT_END" << std::endl;
 
-        // Local indirection defeats MSVC C4127 (constant conditional under /WX) on the
-        // BinaryData size, which is a compile-time const int. Mac/Clang is happy either way.
-        const int defaultXmlSize = BinaryData::Default_xmlSize;
-        if (defaultXmlSize > 0)
+        // BinaryData::Default_xml/_xmlSize are guaranteed non-zero at build time
+        // (the file is embedded by juce_add_binary_data). No runtime size guard.
+        juce::String xmlText((const char*)BinaryData::Default_xml, BinaryData::Default_xmlSize);
+        auto parsed = juce::XmlDocument::parse(xmlText);
+        if (parsed != nullptr)
         {
-            juce::String xmlText((const char*)BinaryData::Default_xml, defaultXmlSize);
-            auto parsed = juce::XmlDocument::parse(xmlText);
-            if (parsed != nullptr)
-            {
-                auto vt = juce::ValueTree::fromXml(*parsed);
-                auto st = WonKnobberState::fromValueTree(vt);
-                bool thisOk = std::abs(st.drive - 0.5f) < 1e-6f && std::abs(st.mix - 1.0f) < 1e-6f &&
-                              st.variant == "diamond" && st.bypass == false;
-                // Also check roundtrip xml string equality for exact toValueTree match (after we sync disk xml)
-                auto loadedXml = st.toValueTree().createXml()->toString();
-                bool xmlMatch = (xmlText == genXml) || (loadedXml == genXml); // tolerant of current disk vs generated
-                std::cout << "FACTORY EMBED TEST [Default]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
-                          << " mix=" << st.mix << " variant=" << st.variant << " bypass=" << (st.bypass ? 1 : 0)
-                          << " xmlMatch=" << (xmlMatch ? "yes" : "no") << std::endl;
-                if (!thisOk)
-                    ok = false;
-            }
-            else
-            {
-                std::cout << "FACTORY EMBED TEST [Default]: FAIL (parse)" << std::endl;
+            auto vt = juce::ValueTree::fromXml(*parsed);
+            auto st = WonKnobberState::fromValueTree(vt);
+            bool thisOk = std::abs(st.drive - 0.5f) < 1e-6f && std::abs(st.mix - 1.0f) < 1e-6f &&
+                          st.variant == "diamond" && st.bypass == false;
+            // Also check roundtrip xml string equality for exact toValueTree match (after we sync disk xml)
+            auto loadedXml = st.toValueTree().createXml()->toString();
+            bool xmlMatch = (xmlText == genXml) || (loadedXml == genXml); // tolerant of current disk vs generated
+            std::cout << "FACTORY EMBED TEST [Default]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
+                      << " mix=" << st.mix << " variant=" << st.variant << " bypass=" << (st.bypass ? 1 : 0)
+                      << " xmlMatch=" << (xmlMatch ? "yes" : "no") << std::endl;
+            if (!thisOk)
                 ok = false;
-            }
         }
         else
         {
-            std::cout << "FACTORY EMBED TEST [Default]: FAIL (no BinaryData symbol)" << std::endl;
+            std::cout << "FACTORY EMBED TEST [Default]: FAIL (parse)" << std::endl;
             ok = false;
         }
     }
@@ -320,34 +311,26 @@ static bool runFactoryEmbedTests()
         auto genXml = hotSt.toValueTree().createXml()->toString();
         std::cout << "GENERATED_XML_HOT_START>>>" << genXml << "<<<GENERATED_XML_HOT_END" << std::endl;
 
-        const int hotXmlSize = BinaryData::Hot_xmlSize; // see Default branch above; same MSVC C4127 workaround
-        if (hotXmlSize > 0)
+        // BinaryData::Hot_xml/_xmlSize guaranteed non-zero at build time (see Default branch).
+        juce::String xmlText((const char*)BinaryData::Hot_xml, BinaryData::Hot_xmlSize);
+        auto parsed = juce::XmlDocument::parse(xmlText);
+        if (parsed != nullptr)
         {
-            juce::String xmlText((const char*)BinaryData::Hot_xml, hotXmlSize);
-            auto parsed = juce::XmlDocument::parse(xmlText);
-            if (parsed != nullptr)
-            {
-                auto vt = juce::ValueTree::fromXml(*parsed);
-                auto st = WonKnobberState::fromValueTree(vt);
-                bool thisOk = std::abs(st.drive - 0.7f) < 1e-6f && std::abs(st.mix - 0.95f) < 1e-6f &&
-                              st.variant == "ruby" && st.bypass == false;
-                auto loadedXml = st.toValueTree().createXml()->toString();
-                bool xmlMatch = (xmlText == genXml) || (loadedXml == genXml);
-                std::cout << "FACTORY EMBED TEST [Hot]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
-                          << " mix=" << st.mix << " variant=" << st.variant << " bypass=" << (st.bypass ? 1 : 0)
-                          << " xmlMatch=" << (xmlMatch ? "yes" : "no") << std::endl;
-                if (!thisOk)
-                    ok = false;
-            }
-            else
-            {
-                std::cout << "FACTORY EMBED TEST [Hot]: FAIL (parse)" << std::endl;
+            auto vt = juce::ValueTree::fromXml(*parsed);
+            auto st = WonKnobberState::fromValueTree(vt);
+            bool thisOk = std::abs(st.drive - 0.7f) < 1e-6f && std::abs(st.mix - 0.95f) < 1e-6f &&
+                          st.variant == "ruby" && st.bypass == false;
+            auto loadedXml = st.toValueTree().createXml()->toString();
+            bool xmlMatch = (xmlText == genXml) || (loadedXml == genXml);
+            std::cout << "FACTORY EMBED TEST [Hot]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
+                      << " mix=" << st.mix << " variant=" << st.variant << " bypass=" << (st.bypass ? 1 : 0)
+                      << " xmlMatch=" << (xmlMatch ? "yes" : "no") << std::endl;
+            if (!thisOk)
                 ok = false;
-            }
         }
         else
         {
-            std::cout << "FACTORY EMBED TEST [Hot]: FAIL (no BinaryData symbol)" << std::endl;
+            std::cout << "FACTORY EMBED TEST [Hot]: FAIL (parse)" << std::endl;
             ok = false;
         }
     }
