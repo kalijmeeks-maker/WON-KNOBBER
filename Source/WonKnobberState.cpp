@@ -275,9 +275,12 @@ static bool runFactoryEmbedTests()
         auto genXml = defSt.toValueTree().createXml()->toString();
         std::cout << "GENERATED_XML_DEFAULT_START>>>" << genXml << "<<<GENERATED_XML_DEFAULT_END" << std::endl;
 
-        if (BinaryData::Default_xmlSize > 0)
+        // Local indirection defeats MSVC C4127 (constant conditional under /WX) on the
+        // BinaryData size, which is a compile-time const int. Mac/Clang is happy either way.
+        const int defaultXmlSize = BinaryData::Default_xmlSize;
+        if (defaultXmlSize > 0)
         {
-            juce::String xmlText((const char*)BinaryData::Default_xml, BinaryData::Default_xmlSize);
+            juce::String xmlText((const char*)BinaryData::Default_xml, defaultXmlSize);
             auto parsed = juce::XmlDocument::parse(xmlText);
             if (parsed != nullptr)
             {
@@ -317,9 +320,10 @@ static bool runFactoryEmbedTests()
         auto genXml = hotSt.toValueTree().createXml()->toString();
         std::cout << "GENERATED_XML_HOT_START>>>" << genXml << "<<<GENERATED_XML_HOT_END" << std::endl;
 
-        if (BinaryData::Hot_xmlSize > 0)
+        const int hotXmlSize = BinaryData::Hot_xmlSize; // see Default branch above; same MSVC C4127 workaround
+        if (hotXmlSize > 0)
         {
-            juce::String xmlText((const char*)BinaryData::Hot_xml, BinaryData::Hot_xmlSize);
+            juce::String xmlText((const char*)BinaryData::Hot_xml, hotXmlSize);
             auto parsed = juce::XmlDocument::parse(xmlText);
             if (parsed != nullptr)
             {
