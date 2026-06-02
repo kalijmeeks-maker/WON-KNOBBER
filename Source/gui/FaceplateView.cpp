@@ -140,6 +140,10 @@ void FaceplateView::resized()
     presetStripBounds = place(121, 537, 518, 38);
     transportBounds = place(655, 531, 264, 48);
 
+    // Bypass rocker (footer-left) + small About 'i' affordance (top-right corner).
+    bypassRockerBounds = place(41, 531, 64, 49);
+    aboutBtnBounds = place(930, 9, 20, 20);
+
     // Sub-rects inside presetStrip for interactive elements + name LED.
     {
         const auto ps = presetStripBounds;
@@ -208,9 +212,48 @@ void FaceplateView::setActiveSlot(char s)
     }
 }
 
+void FaceplateView::setBypassed(bool b)
+{
+    if (bypassed != b)
+    {
+        bypassed = b;
+        repaint();
+    }
+}
+
 void FaceplateView::mouseDown(const juce::MouseEvent& e)
 {
     const auto pos = e.getPosition();
+
+    // About modal is top-most + captures all clicks while open. Geometry is recomputed
+    // deterministically (same source as drawAboutPanel) so hit-testing never depends on a paint.
+    if (aboutVisible)
+    {
+        const auto panel = computeAboutPanelBounds();
+        const auto closeBox = juce::Rectangle<int>(panel.getRight() - 26, panel.getY() + 8, 18, 18);
+        if (closeBox.contains(pos) || !panel.contains(pos))
+        {
+            aboutVisible = false;
+            repaint();
+        }
+        return;
+    }
+
+    // 'i' affordance opens the About panel.
+    if (aboutBtnBounds.contains(pos))
+    {
+        aboutVisible = true;
+        repaint();
+        return;
+    }
+
+    // Bypass rocker toggles bypass; editor pushes the new state back via setBypassed().
+    if (bypassRockerBounds.contains(pos))
+    {
+        if (onBypassToggled)
+            onBypassToggled(!bypassed);
+        return;
+    }
 
     if (chevLeftBounds.contains(pos))
     {
@@ -354,4 +397,141 @@ void FaceplateView::drawTransportTray(juce::Graphics& g)
     drawTBtn(loadBtnBounds, "L");                                                  // load (from active slot)
     drawTBtn(undoBtnBounds, juce::String(juce::CharPointer_UTF8("\xe2\x86\xba"))); // ↺ undo
     drawTBtn(randBtnBounds, "R");                                                  // randomize (dice affordance)
+}
+
+//==============================================================================
+// §6 P1 bypass dim-state + §6 P2 About panel. Drawn above all child components via
+// paintOverChildren so the dim veil actually dims the live scopes/meters/knob.
+
+void FaceplateView::paintOverChildren(juce::Graphics& g)
+{
+    // Dim veil over the entire faceplate (incl. live children) signals "inactive".
+    if (bypassed)
+    {
+        g.setColour(juce::Colour(0xff0a0b0d).withAlpha(0.55f));
+        g.fillRect(getLocalBounds());
+    }
+
+    // Rocker is drawn after the veil so the bypass control stays crisp + lit on top.
+    drawBypassRocker(g);
+    drawAboutButton(g);
+
+    // About modal sits above everything (including the dim veil).
+    if (aboutVisible)
+        drawAboutPanel(g);
+}
+
+void FaceplateView::drawBypassRocker(juce::Graphics& g)
+{
+    if (bypassRockerBounds.isEmpty())
+        return;
+
+    const auto b = bypassRockerBounds.toFloat().reduced(2.0f);
+
+    // Recessed metal body (shares the transport-button palette).
+    g.setColour(juce::Colour(0xff0f0f11).withAlpha(0.85f));
+    g.fillRoundedRectangle(b, 4.0f);
+    g.setColour(juce::Colour(0xff9aa0a3).withAlpha(0.35f));
+    g.drawRoundedRectangle(b.reduced(0.5f), 4.0f, 0.7f);
+
+    // Telltale dot: amber glow when BYPASSED (warns the signal is dry); dark when engaged.
+    const float dotR = juce::jmin(b.getWidth(), b.getHeight()) * 0.20f;
+    const juce::Point<float> dotC(b.getCentreX(), b.getY() + b.getHeight() * 0.34f);
+    const auto dot = juce::Rectangle<float>(dotR * 2.0f, dotR * 2.0f).withCentre(dotC);
+
+    if (bypassed)
+    {
+        g.setColour(juce::Colour(0xffffa726).withAlpha(0.30f));
+        g.fillEllipse(dot.expanded(dotR * 0.9f));
+        g.setColour(juce::Colour(0xffffb74d));
+        g.fillEllipse(dot);
+    }
+    else
+    {
+        g.setColour(juce::Colour(0xff2a2c2e));
+        g.fillEllipse(dot);
+        g.setColour(juce::Colour(0xff000000).withAlpha(0.5f));
+        g.drawEllipse(dot, 0.6f);
+    }
+
+    g.setColour(bypassed ? juce::Colour(0xffffd9a0) : juce::Colour(0xff9aa0a3));
+    const float f = juce::jmax(7.0f, b.getHeight() * 0.20f);
+    g.setFont(juce::Font(juce::FontOptions(f).withStyle("Bold")));
+    auto labelArea = bypassRockerBounds;
+    g.drawText("BYPASS", labelArea.removeFromBottom(juce::roundToInt(b.getHeight() * 0.34f)),
+               juce::Justification::centred, false);
+}
+
+void FaceplateView::drawAboutButton(juce::Graphics& g)
+{
+    if (aboutBtnBounds.isEmpty())
+        return;
+
+    const auto b = aboutBtnBounds.toFloat().reduced(1.0f);
+    g.setColour(juce::Colour(0xff0d0e10).withAlpha(0.55f));
+    g.fillEllipse(b);
+    g.setColour(juce::Colour(0xff9aa0a3).withAlpha(aboutVisible ? 0.9f : 0.5f));
+    g.drawEllipse(b.reduced(0.5f), 1.0f);
+    g.setColour(juce::Colour(0xffc9c6be).withAlpha(aboutVisible ? 1.0f : 0.7f));
+    g.setFont(juce::Font(juce::FontOptions(b.getHeight() * 0.72f).withStyle("Bold Italic")));
+    g.drawText("i", aboutBtnBounds, juce::Justification::centred, false);
+}
+
+juce::Rectangle<int> FaceplateView::computeAboutPanelBounds() const
+{
+    const int w = juce::jmin(520, getWidth() - 80);
+    const int h = juce::jmin(300, getHeight() - 120);
+    return juce::Rectangle<int>(0, 0, juce::jmax(120, w), juce::jmax(120, h)).withCentre(getLocalBounds().getCentre());
+}
+
+void FaceplateView::drawAboutPanel(juce::Graphics& g)
+{
+    // Scrim behind the modal.
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.fillRect(getLocalBounds());
+
+    const auto panel = computeAboutPanelBounds();
+    const auto pf = panel.toFloat();
+    g.setColour(juce::Colour(0xff17181b));
+    g.fillRoundedRectangle(pf, 8.0f);
+    g.setColour(juce::Colour(0xffaa5500).withAlpha(0.6f)); // amber accent edge
+    g.drawRoundedRectangle(pf.reduced(0.5f), 8.0f, 1.2f);
+
+    // Close box (top-right) — geometry mirrors mouseDown's hit-test exactly.
+    const auto closeBox = juce::Rectangle<int>(panel.getRight() - 26, panel.getY() + 8, 18, 18);
+    g.setColour(juce::Colour(0xff9aa0a3));
+    g.setFont(juce::Font(juce::FontOptions(16.0f).withStyle("Bold")));
+    g.drawText(juce::String(juce::CharPointer_UTF8("\xc3\x97")), closeBox, juce::Justification::centred, false); // ×
+
+    auto inner = panel.reduced(24);
+
+#ifdef JucePlugin_VersionString
+    const juce::String ver = "v" JucePlugin_VersionString;
+#else
+    const juce::String ver = "v0.1.0";
+#endif
+
+    auto line = inner;
+    g.setColour(juce::Colour(0xfff0ede4));
+    g.setFont(juce::Font(juce::FontOptions(24.0f).withStyle("Bold")));
+    g.drawText("WON-KNOBBER  " + ver, line.removeFromTop(34), juce::Justification::topLeft, false);
+
+    g.setColour(juce::Colour(0xff9aa0a3));
+    g.setFont(juce::Font(juce::FontOptions(13.0f)));
+    g.drawText("Photoreal one-knob saturation", line.removeFromTop(22), juce::Justification::topLeft, false);
+
+    // Attribution body — surfaces the Airwindows MIT notice in-app (THIRD_PARTY_LICENSES.md ship req).
+    const juce::String copy = juce::String(juce::CharPointer_UTF8("\xc2\xa9"));     // ©
+    const juce::String dash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94")); // —
+    juce::String body;
+    body << copy << " 2026 kalijmeeks-maker\n"
+         << "Licensed under PolyForm Noncommercial 1.0.0\n\n"
+         << "Saturation algorithms derived from Airwindows\n"
+         << copy << " 2018 Chris Johnson  " << dash << "  MIT License\n\n"
+         << "Built with JUCE.";
+
+    line.removeFromTop(10);
+    g.setColour(juce::Colour(0xffc9c6be));
+    g.setFont(juce::Font(juce::FontOptions(12.5f)));
+    g.drawMultiLineText(body, line.getX(), line.getY() + 14, line.getWidth(), juce::Justification::topLeft);
 }

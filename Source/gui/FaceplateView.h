@@ -26,6 +26,8 @@ public:
     ~FaceplateView() override;
 
     void paint(juce::Graphics& g) override;
+    // dim veil (bypass) + lit rocker + About modal, drawn above all child components
+    void paintOverChildren(juce::Graphics& g) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent& e) override;
 
@@ -81,6 +83,13 @@ public:
     // Editor sets this from the processor so the ‹ › chevrons wrap over the real bank size.
     void setNumFactoryPresets(int n) { numFactoryPresets = juce::jmax(1, n); }
 
+    // Bypass rocker: editor wires this to the processor; arg = new bypass state (true = bypassed).
+    std::function<void(bool)> onBypassToggled;
+
+    // Editor pushes the authoritative bypass state in (init + host-recall sync). Dims the faceplate.
+    void setBypassed(bool b);
+    bool isBypassed() const { return bypassed; }
+
 private:
     // Design reference is the 960x600 PRO chassis; controls are placed in its coords.
     static constexpr int kRefW = 960;
@@ -114,4 +123,16 @@ private:
     void drawPresetStrip(juce::Graphics& g);
     void drawTransportTray(juce::Graphics& g);
     void cyclePreset(int dir); // -1 prev, +1 next; wraps; fires callback
+
+    // Bypass dim-state (§6 P1) + About panel (§6 P2). Drawn in paintOverChildren so the veil
+    // sits above the live child components; hit-tested inline in mouseDown (no extra child comps).
+    bool bypassed{false};
+    bool aboutVisible{false};
+    juce::Rectangle<int> bypassRockerBounds; // bypass_rocker anchor [41,531,64,49]
+    juce::Rectangle<int> aboutBtnBounds;     // small 'i' affordance, top-right
+
+    void drawBypassRocker(juce::Graphics& g);
+    void drawAboutButton(juce::Graphics& g);
+    void drawAboutPanel(juce::Graphics& g);
+    juce::Rectangle<int> computeAboutPanelBounds() const; // centred modal rect (shared by paint + hit-test)
 };

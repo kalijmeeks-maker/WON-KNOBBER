@@ -40,6 +40,14 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
     faceplate.setVariant(processorRef.getCurrentVariant());
     faceplate.onVariantPicked = [this](const juce::String& stone) { processorRef.setCurrentVariant(stone); };
 
+    // Bypass rocker: reflect persisted state, write toggles back to the processor.
+    faceplate.setBypassed(processorRef.getBypassState());
+    faceplate.onBypassToggled = [this](bool b)
+    {
+        processorRef.setBypassState(b);
+        faceplate.setBypassed(b);
+    };
+
     // Phase 2b: preset strip (factory name LED + ‹› cycle + A/B) + transport tray (S/L/U/R).
     // Init display (preset name is UI-transient, not persisted in state; start on the first
     // factory voice; updates only on explicit factory load via strip).
@@ -151,6 +159,9 @@ void WonKnobberAudioProcessorEditor::timerCallback()
         if (v != faceplate.getVariant())
             faceplate.setVariant(v);
     }
+
+    // Reflect bypass (e.g. host state recall while UI open); setBypassed no-ops if unchanged.
+    faceplate.setBypassed(processorRef.getBypassState());
 
     // Reflect active slot (mostly driven by our strip clicks, but keeps indicator correct
     // after any processor-driven change).
