@@ -6,47 +6,9 @@
         PurestSaturation is the guardrail.  Oversampling is the polish.
 */
 #include "Saturation.h"
-#include "AirwindowsShapers.h"
+#include "TransferModel.h" // shared voicing map + transfer (also pulls in AirwindowsShapers.h)
 
 #include <cmath>
-
-namespace
-{
-// Per-sample stage intensities derived from the single "Drive" knob (0..1).
-// These curves are the voicing — tuned by ear, safe to re-shape later.
-struct StageParams
-{
-    double density;      // Density3 amount (1.0 = neutral)
-    double mojoMix;      // parallel Mojo blend (the "weight")
-    double presence;     // Spiral2 presence blend (the "air")
-    double purestInGain; // drive into the PurestSaturation ceiling
-    double makeup;       // output trim to counter loudness bias
-};
-
-inline double smoothstep (double e0, double e1, double x)
-{
-    if (e1 <= e0)
-        return x < e0 ? 0.0 : 1.0;
-    const double t = juce::jlimit (0.0, 1.0, (x - e0) / (e1 - e0));
-    return t * t * (3.0 - 2.0 * t);
-}
-
-// One-knob mapping (see WON KNOBBER spec):
-//   0-20%   clean thickening, mostly Mojo
-//   20-50%  Density3 toward neutral/fat
-//   50-80%  Density3 thick saturation, more drive
-//   80-100% Spiral2 presence + Purest ceiling assert harder
-inline StageParams computeStageParams (double d)
-{
-    StageParams p;
-    p.density      = 1.0 + smoothstep (0.20, 1.0, d) * 3.0;                 // 1.0 -> 4.0
-    p.mojoMix      = juce::jlimit (0.0, 1.0, 0.12 + 0.60 * (1.0 - smoothstep (0.0, 0.5, d)));
-    p.presence     = smoothstep (0.80, 1.0, d) * 0.5;
-    p.purestInGain = 1.0 + smoothstep (0.80, 1.0, d) * 0.8;
-    p.makeup       = 1.0 - smoothstep (0.20, 1.0, d) * 0.15;
-    return p;
-}
-} // namespace
 
 void Saturation::prepare (double sampleRate, int blockSize, int numChannels,
                           int oversampleFactorLog2, bool offlineHighQuality)
@@ -86,7 +48,7 @@ void Saturation::process (juce::AudioBuffer<float>& buffer)
     for (size_t n = 0; n < numSamples; ++n)
     {
         const double d = (double) drive.getNextValue();
-        const StageParams p = computeStageParams (d);
+        const wk::StageParams p = wk::computeStageParams (d);
 
         for (size_t ch = 0; ch < numChannels; ++ch)
         {

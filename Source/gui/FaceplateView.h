@@ -8,7 +8,9 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "BypassLED.h"
+#include "HarmonicBars.h"
 #include "KnobLookAndFeel.h"
+#include "TransferCurve.h"
 #include "VUMeter.h"
 
 class FaceplateView : public juce::Component
@@ -24,6 +26,13 @@ public:
     VUMeter& getVUMeter() { return vuMeter; }
     BypassLED& getBypassLED() { return bypassLed; }
 
+    // Push the current Drive (0..1) to the live scopes (transfer curve + harmonics).
+    void setDrive (float d)
+    {
+        transferCurve.setDrive (d);
+        harmonicBars.setDrive (d);
+    }
+
 private:
     // Design reference is the 960x600 PRO chassis; controls are placed in its coords.
     static constexpr int kRefW = 960;
@@ -31,8 +40,10 @@ private:
 
     KnobLookAndFeel knobLnf;
     juce::Slider driveKnob;
-    VUMeter vuMeter;     // Phase 2: live I/O meters (not shown yet)
-    BypassLED bypassLed; // Phase 2: live bypass telltale (not shown yet)
+    TransferCurve transferCurve; // live transfer-curve scope (TRANSFER panel)
+    HarmonicBars  harmonicBars;  // harmonic spectrum scope (HARMONICS panel)
+    VUMeter vuMeter;     // Phase 2b: live I/O meters (not shown yet)
+    BypassLED bypassLed; // Phase 2b: live bypass telltale (not shown yet)
 
     juce::Image faceplate; // embedded photoreal chassis (BinaryData)
 };

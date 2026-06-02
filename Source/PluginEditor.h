@@ -9,7 +9,8 @@
 #include "PluginProcessor.h"
 #include "gui/FaceplateView.h"
 
-class WonKnobberAudioProcessorEditor : public juce::AudioProcessorEditor
+class WonKnobberAudioProcessorEditor : public juce::AudioProcessorEditor,
+                                       private juce::Timer
 {
 public:
     explicit WonKnobberAudioProcessorEditor (WonKnobberAudioProcessor&);
@@ -19,6 +20,8 @@ public:
     void resized() override;
 
 private:
+    void timerCallback() override; // pushes Drive (incl. host automation) to the scopes
+
     WonKnobberAudioProcessor& processorRef;
     FaceplateView faceplate;
 
