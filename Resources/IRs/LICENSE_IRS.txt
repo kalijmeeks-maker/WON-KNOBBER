@@ -1,4 +1,5 @@
-WON-KNOBBER IR placeholders (2026-06-02)
-Six distinct synthetic mono 48 kHz IRs (Tier A) by Grok/WON Producer — integration wiring only.
-Regenerate: Scripts/generate_cab_ir_placeholders.py
-Swap in real in-house captures under the same filenames before release; PolyForm Noncommercial plugin.
+WON-KNOBBER IR assets (2026-06-02)
+Six Tier A in-house mono 48 kHz / 24-bit cab IRs (Grok/WON Producer).
+Regenerate: Scripts/generate_cab_ir_captures.py
+See docs/WON_IR_capture_log_2026-06-02.md. Optional mic'd re-capture: same filenames only.
+PolyForm Noncommercial plugin.
