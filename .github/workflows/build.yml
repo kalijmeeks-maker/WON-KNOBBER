@@ -46,7 +46,7 @@ jobs:
 
       - name: Upload artifacts (macOS)
         if: runner.os == 'macOS' && hashFiles('CMakeLists.txt') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WON-KNOBBER-macOS
           path: |
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows' && hashFiles('CMakeLists.txt') != ''
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: WON-KNOBBER-Windows
           path: |
