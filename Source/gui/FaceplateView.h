@@ -13,6 +13,7 @@
 #include "IOMeter.h"
 #include "KnobLookAndFeel.h"
 #include "MixKnob.h"
+#include "StatusLEDs.h"
 #include "TransferCurve.h"
 
 #include <functional>
@@ -43,6 +44,7 @@ public:
     void pushLevels (float inL, float inR, float outL, float outR, float dt) noexcept
     {
         ioMeter.pushPeaks (inL, inR, outL, outR, dt);
+        statusLEDs.pushLevels (inL, inR, outL, outR, dt);
     }
 
     // "Choose your stone" — switch the hero filmstrip to a registered variant
@@ -71,8 +73,9 @@ private:
     TransferCurve transferCurve; // live transfer-curve scope (TRANSFER panel)
     HarmonicBars  harmonicBars;  // harmonic spectrum scope (HARMONICS panel)
     GemChip gemChip;             // persistent "choose your stone" pill below the knob
-    IOMeter   ioMeter;   // Phase 2b: twin IN/OUT peak meters (io_meters anchor)
-    BypassLED bypassLed; // Phase 2b: live bypass telltale (not shown yet)
+    IOMeter    ioMeter;    // Phase 2b: twin IN/OUT peak meters (io_meters anchor)
+    StatusLEDs statusLEDs; // Phase 2b: POWER / SIG / CLIP dome LEDs (top strip)
+    BypassLED  bypassLed;  // Phase 2b: live bypass telltale (not shown yet)
 
     juce::Image faceplate; // embedded photoreal chassis (BinaryData)
 };
