@@ -1,0 +1,5 @@
+WON-KNOBBER IR assets (2026-06-02)
+Six Tier A in-house mono 48 kHz / 24-bit cab IRs (Grok/WON Producer).
+Regenerate: Scripts/generate_cab_ir_captures.py
+See docs/WON_IR_capture_log_2026-06-02.md. Optional mic'd re-capture: same filenames only.
+PolyForm Noncommercial plugin.
