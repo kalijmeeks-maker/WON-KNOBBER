@@ -65,7 +65,9 @@ FaceplateView::FaceplateView()
     };
     addAndMakeVisible (gemChip);
 
-    // vuMeter / bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
+    addAndMakeVisible (ioMeter);
+
+    // bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
 
 FaceplateView::~FaceplateView()
@@ -109,4 +111,7 @@ void FaceplateView::resized()
     // Reference rect [438, 405, 126, 16] in 960x600 coords (sits in the gap between
     // the knob's bottom and db_readout's [421, 423, 161, 51]).
     gemChip.setBounds (place (438, 405, 126, 16));
+
+    // Twin horizontal IN/OUT peak meters in the io_meters strip atop the chassis.
+    ioMeter.setBounds (place (503, 31, 200, 73));
 }

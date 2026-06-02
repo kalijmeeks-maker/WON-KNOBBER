@@ -4,6 +4,7 @@
 #include "PluginEditor.h"
 
 #include <cmath>
+#include <juce_core/juce_core.h>
 
 WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor (WonKnobberAudioProcessor& p)
     : juce::AudioProcessorEditor (&p), processorRef (p)
@@ -44,6 +45,18 @@ void WonKnobberAudioProcessorEditor::timerCallback()
             knob.setValue (d, juce::dontSendNotification); // reflect host automation on knob + arc
         faceplate.setDrive (d);
     }
+
+    // Drain the audio-thread peak accumulators and feed them to the I/O meter
+    // with a real elapsed-time delta so the hold/decay ballistics are frame-rate
+    // independent (clamped to a sane upper bound in case the timer stalls).
+    const double now = juce::Time::getMillisecondCounterHiRes() * 0.001;
+    const float dt   = lastTickSec > 0.0
+                           ? (float) juce::jlimit (0.0, 0.25, now - lastTickSec)
+                           : 1.0f / 30.0f;
+    lastTickSec = now;
+
+    const auto peaks = processorRef.consumeMeterPeaks();
+    faceplate.pushLevels (peaks.inL, peaks.inR, peaks.outL, peaks.outR, dt);
 }
 
 void WonKnobberAudioProcessorEditor::paint (juce::Graphics& g)

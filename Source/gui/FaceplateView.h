@@ -10,9 +10,9 @@
 #include "BypassLED.h"
 #include "GemChip.h"
 #include "HarmonicBars.h"
+#include "IOMeter.h"
 #include "KnobLookAndFeel.h"
 #include "TransferCurve.h"
-#include "VUMeter.h"
 
 #include <functional>
 
@@ -26,7 +26,6 @@ public:
     void resized() override;
 
     juce::Slider& getDriveKnob() { return driveKnob; }
-    VUMeter& getVUMeter() { return vuMeter; }
     BypassLED& getBypassLED() { return bypassLed; }
 
     // Push the current Drive (0..1) to the live scopes (transfer curve + harmonics).
@@ -34,6 +33,14 @@ public:
     {
         transferCurve.setDrive (d);
         harmonicBars.setDrive (d);
+    }
+
+    // Push per-block linear peaks (pre + post chain) into the I/O meter at the
+    // editor's timer rate. dt = seconds since the previous push, used for the
+    // meter's time-based hold/decay ballistics.
+    void pushLevels (float inL, float inR, float outL, float outR, float dt) noexcept
+    {
+        ioMeter.pushPeaks (inL, inR, outL, outR, dt);
     }
 
     // "Choose your stone" — switch the hero filmstrip to a registered variant
@@ -61,7 +68,7 @@ private:
     TransferCurve transferCurve; // live transfer-curve scope (TRANSFER panel)
     HarmonicBars  harmonicBars;  // harmonic spectrum scope (HARMONICS panel)
     GemChip gemChip;             // persistent "choose your stone" pill below the knob
-    VUMeter vuMeter;     // Phase 2b: live I/O meters (not shown yet)
+    IOMeter   ioMeter;   // Phase 2b: twin IN/OUT peak meters (io_meters anchor)
     BypassLED bypassLed; // Phase 2b: live bypass telltale (not shown yet)
 
     juce::Image faceplate; // embedded photoreal chassis (BinaryData)
