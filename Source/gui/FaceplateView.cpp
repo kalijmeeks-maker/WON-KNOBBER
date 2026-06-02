@@ -524,10 +524,11 @@ void FaceplateView::drawAboutPanel(juce::Graphics& g)
     const juce::String copy = juce::String(juce::CharPointer_UTF8("\xc2\xa9"));     // ©
     const juce::String dash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94")); // —
     juce::String body;
-    body << copy << " 2026 kalijmeeks-maker\n"
-         << "Licensed under PolyForm Noncommercial 1.0.0\n\n"
+    body << copy << " 2026 Kali Meeks\n"
+         << "WON-KNOBBER is licensed under PolyForm Noncommercial 1.0.0\n\n"
          << "Saturation algorithms derived from Airwindows\n"
          << copy << " 2018 Chris Johnson  " << dash << "  MIT License\n\n"
+         << "Full third-party notices: THIRD_PARTY_LICENSES.md\n"
          << "Built with JUCE.";
 
     line.removeFromTop(10);
