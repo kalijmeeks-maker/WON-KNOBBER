@@ -42,10 +42,18 @@ file(GLOB_RECURSE WK_SOURCES CONFIGURE_DEPENDS
 )
 target_sources(WonKnobber PRIVATE ${WK_SOURCES})
 
-# ---- Embedded binary assets (knob filmstrip + PRO faceplate chassis) ----
+# ---- Embedded binary assets (PRO faceplate chassis + all 7 gem filmstrips) ----
+# Embedding all 7 (~43 MB total) keeps the plugin self-contained offline; the
+# "choose your stone" picker swaps between them at runtime via KnobLookAndFeel.
 juce_add_binary_data(WonKnobberBinaryData SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x600.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_onyx_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_sapphire_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_emerald_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_ruby_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_amethyst_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_citrine_256.png"
 )
 
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")

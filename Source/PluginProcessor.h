@@ -41,8 +41,15 @@ public:
 
     juce::AudioParameterFloat* getDriveParameter() const noexcept { return drive; }
 
+    // "Choose your stone" — persistent UI state (NOT an automatable audio param;
+    // wrong shape for a host's automation lane). Round-tripped via
+    // get/setStateInformation. Default = "diamond".
+    juce::String getCurrentVariant() const                  { return currentVariant; }
+    void         setCurrentVariant (const juce::String& v)  { currentVariant = v; }
+
 private:
     juce::AudioParameterFloat* drive { nullptr }; // 0.0 - 1.0, default 0.5
+    juce::String currentVariant { "diamond" };    // persisted in plugin state
 
     Saturation saturation;
     Convolution convolution;
