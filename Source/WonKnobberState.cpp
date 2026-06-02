@@ -265,30 +265,30 @@ static bool runFactoryEmbedTests()
 {
     bool ok = true;
 
-    // Default: drive=0.5 mix=1.0 variant=diamond bypass=false (0)
+    // TAPE HEAD: drive=0.42 mix=1.0 variant=diamond bypass=false (0)
     {
         WonKnobberState defSt;
-        defSt.drive = 0.5f;
+        defSt.drive = 0.42f;
         defSt.mix = 1.0f;
         defSt.variant = "diamond";
         defSt.bypass = false;
         auto genXml = defSt.toValueTree().createXml()->toString();
-        std::cout << "GENERATED_XML_DEFAULT_START>>>" << genXml << "<<<GENERATED_XML_DEFAULT_END" << std::endl;
+        std::cout << "GENERATED_XML_TAPEHEAD_START>>>" << genXml << "<<<GENERATED_XML_TAPEHEAD_END" << std::endl;
 
-        // BinaryData::Default_xml/_xmlSize are guaranteed non-zero at build time
+        // BinaryData::tape_head_xml/_xmlSize are guaranteed non-zero at build time
         // (the file is embedded by juce_add_binary_data). No runtime size guard.
-        juce::String xmlText((const char*)BinaryData::Default_xml, BinaryData::Default_xmlSize);
+        juce::String xmlText((const char*)BinaryData::tape_head_xml, BinaryData::tape_head_xmlSize);
         auto parsed = juce::XmlDocument::parse(xmlText);
         if (parsed != nullptr)
         {
             auto vt = juce::ValueTree::fromXml(*parsed);
             auto st = WonKnobberState::fromValueTree(vt);
-            bool thisOk = std::abs(st.drive - 0.5f) < 1e-6f && std::abs(st.mix - 1.0f) < 1e-6f &&
+            bool thisOk = std::abs(st.drive - 0.42f) < 1e-6f && std::abs(st.mix - 1.0f) < 1e-6f &&
                           st.variant == "diamond" && st.bypass == false;
             // Also check roundtrip xml string equality for exact toValueTree match (after we sync disk xml)
             auto loadedXml = st.toValueTree().createXml()->toString();
             bool xmlMatch = (xmlText == genXml) || (loadedXml == genXml); // tolerant of current disk vs generated
-            std::cout << "FACTORY EMBED TEST [Default]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
+            std::cout << "FACTORY EMBED TEST [TAPE HEAD]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
                       << " mix=" << st.mix << " variant=" << st.variant << " bypass=" << (st.bypass ? 1 : 0)
                       << " xmlMatch=" << (xmlMatch ? "yes" : "no") << std::endl;
             if (!thisOk)
@@ -296,33 +296,33 @@ static bool runFactoryEmbedTests()
         }
         else
         {
-            std::cout << "FACTORY EMBED TEST [Default]: FAIL (parse)" << std::endl;
+            std::cout << "FACTORY EMBED TEST [TAPE HEAD]: FAIL (parse)" << std::endl;
             ok = false;
         }
     }
 
-    // Hot: drive=0.7 mix=0.95 variant=ruby bypass=false
+    // FURNACE: drive=0.86 mix=1.0 variant=ruby bypass=false
     {
         WonKnobberState hotSt;
-        hotSt.drive = 0.7f;
-        hotSt.mix = 0.95f;
+        hotSt.drive = 0.86f;
+        hotSt.mix = 1.0f;
         hotSt.variant = "ruby";
         hotSt.bypass = false;
         auto genXml = hotSt.toValueTree().createXml()->toString();
-        std::cout << "GENERATED_XML_HOT_START>>>" << genXml << "<<<GENERATED_XML_HOT_END" << std::endl;
+        std::cout << "GENERATED_XML_FURNACE_START>>>" << genXml << "<<<GENERATED_XML_FURNACE_END" << std::endl;
 
-        // BinaryData::Hot_xml/_xmlSize guaranteed non-zero at build time (see Default branch).
-        juce::String xmlText((const char*)BinaryData::Hot_xml, BinaryData::Hot_xmlSize);
+        // BinaryData::furnace_xml/_xmlSize guaranteed non-zero at build time (see TAPE HEAD branch).
+        juce::String xmlText((const char*)BinaryData::furnace_xml, BinaryData::furnace_xmlSize);
         auto parsed = juce::XmlDocument::parse(xmlText);
         if (parsed != nullptr)
         {
             auto vt = juce::ValueTree::fromXml(*parsed);
             auto st = WonKnobberState::fromValueTree(vt);
-            bool thisOk = std::abs(st.drive - 0.7f) < 1e-6f && std::abs(st.mix - 0.95f) < 1e-6f &&
+            bool thisOk = std::abs(st.drive - 0.86f) < 1e-6f && std::abs(st.mix - 1.0f) < 1e-6f &&
                           st.variant == "ruby" && st.bypass == false;
             auto loadedXml = st.toValueTree().createXml()->toString();
             bool xmlMatch = (xmlText == genXml) || (loadedXml == genXml);
-            std::cout << "FACTORY EMBED TEST [Hot]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
+            std::cout << "FACTORY EMBED TEST [FURNACE]: " << (thisOk ? "PASS" : "FAIL") << " drive=" << st.drive
                       << " mix=" << st.mix << " variant=" << st.variant << " bypass=" << (st.bypass ? 1 : 0)
                       << " xmlMatch=" << (xmlMatch ? "yes" : "no") << std::endl;
             if (!thisOk)
@@ -330,7 +330,7 @@ static bool runFactoryEmbedTests()
         }
         else
         {
-            std::cout << "FACTORY EMBED TEST [Hot]: FAIL (parse)" << std::endl;
+            std::cout << "FACTORY EMBED TEST [FURNACE]: FAIL (parse)" << std::endl;
             ok = false;
         }
     }

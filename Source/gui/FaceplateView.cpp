@@ -192,11 +192,6 @@ void FaceplateView::setPresetDisplayName(const juce::String& name)
     if (name != currentPresetName)
     {
         currentPresetName = name;
-        // keep index in sync if it matches a known factory (for cycling)
-        if (name == "Default" || name == "default")
-            currentPresetIndex = 0;
-        else if (name == "Hot" || name == "hot")
-            currentPresetIndex = 1;
         repaint();
     }
 }
@@ -269,10 +264,11 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
 
 void FaceplateView::cyclePreset(int dir)
 {
-    const int n = 2; // fixed for Phase 2b (embedded Default/Hot); keep to factory data only
+    const int n = juce::jmax(1, numFactoryPresets);
     currentPresetIndex = (currentPresetIndex + dir + n) % n;
-    currentPresetName = (currentPresetIndex == 0 ? "Default" : "Hot");
     repaint();
+    // Editor's onFactoryPresetSelected loads the preset and pushes the authoritative name back
+    // via setPresetDisplayName, so names aren't hard-coded here.
     if (onFactoryPresetSelected)
         onFactoryPresetSelected(currentPresetIndex);
 }

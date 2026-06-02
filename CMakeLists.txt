@@ -55,8 +55,14 @@ juce_add_binary_data(WonKnobberBinaryData SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_ruby_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_amethyst_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_citrine_256.png"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/Default.xml"
-    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/Hot.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/tape_head.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/console_glue.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/furnace.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/velvet.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/sunday_drive.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/tube_warm.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/diode_bite.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/transformer.xml"
 )
 
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")

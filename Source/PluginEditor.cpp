@@ -41,9 +41,10 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
     faceplate.onVariantPicked = [this](const juce::String& stone) { processorRef.setCurrentVariant(stone); };
 
     // Phase 2b: preset strip (factory name LED + ‹› cycle + A/B) + transport tray (S/L/U/R).
-    // Init display (preset name is UI-transient, not persisted in state; always start "Default"
-    // on open; updates only on explicit factory load via strip).
-    faceplate.setPresetDisplayName("Default");
+    // Init display (preset name is UI-transient, not persisted in state; start on the first
+    // factory voice; updates only on explicit factory load via strip).
+    faceplate.setNumFactoryPresets(processorRef.getNumFactoryPresets());
+    faceplate.setPresetDisplayName(processorRef.getFactoryPresetName(0));
     faceplate.setActiveSlot(processorRef.getActiveSlot());
 
     faceplate.onFactoryPresetSelected = [this](int idx)
