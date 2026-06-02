@@ -54,6 +54,8 @@ juce_add_binary_data(WonKnobberBinaryData SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_ruby_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_amethyst_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_citrine_256.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/Default.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/Hot.xml"
 )
 
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
