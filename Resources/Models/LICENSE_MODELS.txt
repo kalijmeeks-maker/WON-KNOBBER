@@ -1,0 +1,2 @@
+Neural weight placeholders — replace with trained in-house exports.
+Engine: RTNeural (BSD-3-Clause) — see THIRD_PARTY_LICENSES.md when shipped.

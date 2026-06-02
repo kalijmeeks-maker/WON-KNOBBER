@@ -1,0 +1,3 @@
+WON-KNOBBER IR placeholders (2026-06-02)
+Synthetic placeholders by Grok/WON Producer for integration wiring.
+Replace with in-house captures before release; PolyForm Noncommercial plugin.
