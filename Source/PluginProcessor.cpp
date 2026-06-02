@@ -44,14 +44,52 @@ bool WonKnobberAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
     return layouts.getMainInputChannelSet() == mainOut;
 }
 
+namespace
+{
+    // Lock-free max-merge: store newValue iff it's greater than the current value.
+    // Audio thread only; GUI thread does the consume (exchange-with-zero) elsewhere.
+    inline void atomicMaxMerge (std::atomic<float>& slot, float newValue) noexcept
+    {
+        float current = slot.load (std::memory_order_relaxed);
+        while (newValue > current
+               && ! slot.compare_exchange_weak (current, newValue,
+                                                std::memory_order_relaxed,
+                                                std::memory_order_relaxed))
+        {
+            // current was updated by compare_exchange to the latest value; loop.
+        }
+    }
+}
+
 void WonKnobberAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     juce::ScopedNoDenormals noDenormals;
+
+    // Input tap (pre-saturation). buffer.getMagnitude is absolute peak across the
+    // requested range, which is exactly what a peak meter wants.
+    const int  numCh   = buffer.getNumChannels();
+    const int  numSmps = buffer.getNumSamples();
+    if (numCh >= 1) atomicMaxMerge (peakInL, buffer.getMagnitude (0, 0, numSmps));
+    if (numCh >= 2) atomicMaxMerge (peakInR, buffer.getMagnitude (1, 0, numSmps));
 
     saturation.setDrive (drive->get());
     saturation.process (buffer);
     convolution.process (buffer);
     // neuralModel.process (buffer); // enabled once a model is loaded
+
+    // Output tap (post-chain).
+    if (numCh >= 1) atomicMaxMerge (peakOutL, buffer.getMagnitude (0, 0, numSmps));
+    if (numCh >= 2) atomicMaxMerge (peakOutR, buffer.getMagnitude (1, 0, numSmps));
+}
+
+WonKnobberAudioProcessor::LevelSnapshot WonKnobberAudioProcessor::consumeMeterPeaks() noexcept
+{
+    LevelSnapshot s;
+    s.inL  = peakInL .exchange (0.0f, std::memory_order_relaxed);
+    s.inR  = peakInR .exchange (0.0f, std::memory_order_relaxed);
+    s.outL = peakOutL.exchange (0.0f, std::memory_order_relaxed);
+    s.outR = peakOutR.exchange (0.0f, std::memory_order_relaxed);
+    return s;
 }
 
 juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()

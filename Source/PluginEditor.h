@@ -24,6 +24,7 @@ private:
 
     WonKnobberAudioProcessor& processorRef;
     FaceplateView faceplate;
+    double lastTickSec { 0.0 }; // ballistics dt — first tick falls back to 1/30 s
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WonKnobberAudioProcessorEditor)
 };
