@@ -67,6 +67,7 @@ FaceplateView::FaceplateView()
     addAndMakeVisible (gemChip);
 
     addAndMakeVisible (ioMeter);
+    addAndMakeVisible (statusLEDs);
 
     // bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
@@ -118,4 +119,10 @@ void FaceplateView::resized()
 
     // DRY/WET mix knob at the mix_knob anchor (bottom right of harmonics area).
     mixKnob.setBounds (place (758, 346, 134, 110));
+
+    // POWER · SIG · CLIP dome LEDs at status_leds anchor centres (806,55) (850,55)
+    // (894,55), 14 px each. Bounds span: left = POWER centre - 7, right = CLIP centre
+    // + 7 → x=799 .. 901 (102 wide), y=48 .. 62 (14 tall). StatusLEDs derives the
+    // three centres internally as fractions of its bounds.
+    statusLEDs.setBounds (place (799, 48, 102, 14));
 }
