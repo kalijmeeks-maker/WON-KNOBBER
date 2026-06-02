@@ -8,10 +8,13 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "BypassLED.h"
+#include "GemChip.h"
 #include "HarmonicBars.h"
 #include "KnobLookAndFeel.h"
 #include "TransferCurve.h"
 #include "VUMeter.h"
+
+#include <functional>
 
 class FaceplateView : public juce::Component
 {
@@ -33,6 +36,21 @@ public:
         harmonicBars.setDrive (d);
     }
 
+    // "Choose your stone" — switch the hero filmstrip to a registered variant
+    // (diamond/onyx/sapphire/emerald/ruby/amethyst/citrine). Repaints knob + chip.
+    void setVariant (const juce::String& stone)
+    {
+        knobLnf.setVariant (stone);
+        gemChip.setLabel (stone);
+        driveKnob.repaint();
+    }
+    juce::String getVariant() const { return knobLnf.getCurrentVariant(); }
+    const juce::StringArray& getVariantNames() const { return knobLnf.getVariantNames(); }
+
+    // Editor wires this — chip click cycles to the next stone and notifies back
+    // so the processor can persist the choice. String arg = newly selected stone.
+    std::function<void (const juce::String&)> onVariantPicked;
+
 private:
     // Design reference is the 960x600 PRO chassis; controls are placed in its coords.
     static constexpr int kRefW = 960;
@@ -42,6 +60,7 @@ private:
     juce::Slider driveKnob;
     TransferCurve transferCurve; // live transfer-curve scope (TRANSFER panel)
     HarmonicBars  harmonicBars;  // harmonic spectrum scope (HARMONICS panel)
+    GemChip gemChip;             // persistent "choose your stone" pill below the knob
     VUMeter vuMeter;     // Phase 2b: live I/O meters (not shown yet)
     BypassLED bypassLed; // Phase 2b: live bypass telltale (not shown yet)
 

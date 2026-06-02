@@ -13,8 +13,19 @@ FaceplateView::FaceplateView()
     faceplate = juce::ImageCache::getFromMemory (
         BinaryData::faceplate_pro_960x600_png, BinaryData::faceplate_pro_960x600_pngSize);
 
-    knobLnf.setFilmstrip (juce::ImageCache::getFromMemory (
-        BinaryData::knob_diamond_256_png, BinaryData::knob_diamond_256_pngSize));
+    // Register all 7 gem variants for the "choose your stone" picker.
+    // Diamond is added first so it's the default on a fresh load.
+    auto reg = [this] (const juce::String& name, const char* data, int size)
+    {
+        knobLnf.addVariant (name, juce::ImageCache::getFromMemory (data, size));
+    };
+    reg ("diamond",  BinaryData::knob_diamond_256_png,  BinaryData::knob_diamond_256_pngSize);
+    reg ("onyx",     BinaryData::knob_onyx_256_png,     BinaryData::knob_onyx_256_pngSize);
+    reg ("sapphire", BinaryData::knob_sapphire_256_png, BinaryData::knob_sapphire_256_pngSize);
+    reg ("emerald",  BinaryData::knob_emerald_256_png,  BinaryData::knob_emerald_256_pngSize);
+    reg ("ruby",     BinaryData::knob_ruby_256_png,     BinaryData::knob_ruby_256_pngSize);
+    reg ("amethyst", BinaryData::knob_amethyst_256_png, BinaryData::knob_amethyst_256_pngSize);
+    reg ("citrine",  BinaryData::knob_citrine_256_png,  BinaryData::knob_citrine_256_pngSize);
 
     driveKnob.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
     driveKnob.setTextBoxStyle (juce::Slider::NoTextBox, false, 0, 0);
@@ -24,6 +35,36 @@ FaceplateView::FaceplateView()
     addAndMakeVisible (transferCurve);
     addAndMakeVisible (harmonicBars);
     addAndMakeVisible (driveKnob);
+
+    // Wire the gem chip: left-click cycles to the next stone, right-click pops the menu.
+    gemChip.setLabel (knobLnf.getCurrentVariant());
+    gemChip.onCycle = [this]
+    {
+        const auto& names = knobLnf.getVariantNames();
+        if (names.isEmpty()) return;
+        const int idx = juce::jmax (0, names.indexOf (knobLnf.getCurrentVariant()));
+        const juce::String next = names[(idx + 1) % names.size()];
+        setVariant (next);
+        if (onVariantPicked) onVariantPicked (next);
+    };
+    gemChip.onShowMenu = [this]
+    {
+        const auto& names = knobLnf.getVariantNames();
+        const auto current = knobLnf.getCurrentVariant();
+        juce::PopupMenu menu;
+        for (int i = 0; i < names.size(); ++i)
+            menu.addItem (i + 1, names[i].toUpperCase(), true, names[i] == current);
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&gemChip),
+                            [this, names] (int chosen)
+                            {
+                                if (chosen <= 0 || chosen > names.size()) return;
+                                const juce::String picked = names[chosen - 1];
+                                setVariant (picked);
+                                if (onVariantPicked) onVariantPicked (picked);
+                            });
+    };
+    addAndMakeVisible (gemChip);
+
     // vuMeter / bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
 
@@ -63,4 +104,9 @@ void FaceplateView::resized()
     transferCurve.setBounds (place (57, 168, 240, 240));   // transfer_panel
     harmonicBars.setBounds  (place (705, 168, 240, 166));  // harmonics_panel
     driveKnob.setBounds     (place (501 - 115, 289 - 115, 230, 230)); // hero_knob_well, centre (501,289)
+
+    // GemChip — small persistent pill centred below the knob, above the dB readout.
+    // Reference rect [438, 405, 126, 16] in 960x600 coords (sits in the gap between
+    // the knob's bottom and db_readout's [421, 423, 161, 51]).
+    gemChip.setBounds (place (438, 405, 126, 16));
 }

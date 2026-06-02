@@ -17,11 +17,11 @@ WonKnobberAudioProcessor::WonKnobberAudioProcessor()
 
 void WonKnobberAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    const bool nonRealtime  = isNonRealtime();
-    const int  osFactorLog2 = nonRealtime ? 5 : 4; // 32x offline polish / 16x realtime
+    const bool offline      = isNonRealtime();
+    const int  osFactorLog2 = offline ? 5 : 4; // 32x offline polish / 16x realtime
     const int  numInputs    = juce::jmax (1, getTotalNumInputChannels());
 
-    saturation.prepare (sampleRate, samplesPerBlock, numInputs, osFactorLog2, nonRealtime);
+    saturation.prepare (sampleRate, samplesPerBlock, numInputs, osFactorLog2, offline);
     setLatencySamples (saturation.getLatencySamples());
 
     convolution.prepare (sampleRate, samplesPerBlock);
@@ -61,8 +61,11 @@ juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()
 
 void WonKnobberAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
+    // Layout: [float drive][String currentVariant]. Backwards-compatible with the
+    // float-only state — older sets just won't have the variant byte after the float.
     juce::MemoryOutputStream stream (destData, true);
     stream.writeFloat (drive->get());
+    stream.writeString (currentVariant);
 }
 
 void WonKnobberAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -70,6 +73,12 @@ void WonKnobberAudioProcessor::setStateInformation (const void* data, int sizeIn
     juce::MemoryInputStream stream (data, (size_t) sizeInBytes, false);
     if (stream.getNumBytesRemaining() >= (int) sizeof (float))
         *drive = stream.readFloat();
+    if (stream.getNumBytesRemaining() > 0)
+    {
+        const auto v = stream.readString();
+        if (v.isNotEmpty())
+            currentVariant = v;
+    }
 }
 
 // JUCE plugin entry point

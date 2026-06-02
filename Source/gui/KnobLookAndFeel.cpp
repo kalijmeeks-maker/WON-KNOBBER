@@ -1,7 +1,40 @@
 /*
-    KnobLookAndFeel.cpp — see header. Filmstrip blit + placeholder fallback. No real asset yet.
+    KnobLookAndFeel.cpp — filmstrip blit + amber value-arc + 7-stone variant map.
 */
 #include "KnobLookAndFeel.h"
+
+void KnobLookAndFeel::addVariant (const juce::String& stone, const juce::Image& strip)
+{
+    if (! strip.isValid())
+        return;
+
+    const int existing = variantNames.indexOf (stone);
+    if (existing >= 0)
+    {
+        variants[(size_t) existing] = strip; // refresh
+    }
+    else if ((size_t) variantNames.size() < variants.size())
+    {
+        variants[(size_t) variantNames.size()] = strip;
+        variantNames.add (stone);
+    }
+
+    // If this is the first variant, make it the active one.
+    if (currentVariant.isEmpty())
+    {
+        currentVariant = stone;
+        filmstrip = strip;
+    }
+}
+
+void KnobLookAndFeel::setVariant (const juce::String& stone)
+{
+    const int idx = variantNames.indexOf (stone);
+    if (idx < 0)
+        return;
+    currentVariant = stone;
+    filmstrip = variants[(size_t) idx];
+}
 
 void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
                                         float sliderPosProportional, float rotaryStartAngle,

@@ -22,6 +22,14 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor (WonKnobberAudioP
         faceplate.setDrive (driveParam->get());
     }
 
+    // Restore the persisted stone (defaults to "diamond" on a fresh load) and
+    // let the chip write any future picker change back to the processor.
+    faceplate.setVariant (processorRef.getCurrentVariant());
+    faceplate.onVariantPicked = [this] (const juce::String& stone)
+    {
+        processorRef.setCurrentVariant (stone);
+    };
+
     setSize (960, 600);
     startTimerHz (30);
 }
