@@ -12,6 +12,7 @@
 #include "HarmonicBars.h"
 #include "IOMeter.h"
 #include "KnobLookAndFeel.h"
+#include "MixKnob.h"
 #include "TransferCurve.h"
 
 #include <functional>
@@ -26,6 +27,7 @@ public:
     void resized() override;
 
     juce::Slider& getDriveKnob() { return driveKnob; }
+    juce::Slider& getMixKnob()  { return mixKnob.getSlider(); }
     BypassLED& getBypassLED() { return bypassLed; }
 
     // Push the current Drive (0..1) to the live scopes (transfer curve + harmonics).
@@ -65,6 +67,7 @@ private:
 
     KnobLookAndFeel knobLnf;
     juce::Slider driveKnob;
+    MixKnob mixKnob;             // DRY/WET mix; reuses KnobLookAndFeel without filmstrip (ellipse fallback, always circular)
     TransferCurve transferCurve; // live transfer-curve scope (TRANSFER panel)
     HarmonicBars  harmonicBars;  // harmonic spectrum scope (HARMONICS panel)
     GemChip gemChip;             // persistent "choose your stone" pill below the knob

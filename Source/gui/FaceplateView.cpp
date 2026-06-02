@@ -35,6 +35,7 @@ FaceplateView::FaceplateView()
     addAndMakeVisible (transferCurve);
     addAndMakeVisible (harmonicBars);
     addAndMakeVisible (driveKnob);
+    addAndMakeVisible (mixKnob);
 
     // Wire the gem chip: left-click cycles to the next stone, right-click pops the menu.
     gemChip.setLabel (knobLnf.getCurrentVariant());
@@ -114,4 +115,7 @@ void FaceplateView::resized()
 
     // Twin horizontal IN/OUT peak meters in the io_meters strip atop the chassis.
     ioMeter.setBounds (place (503, 31, 200, 73));
+
+    // DRY/WET mix knob at the mix_knob anchor (bottom right of harmonics area).
+    mixKnob.setBounds (place (758, 346, 134, 110));
 }

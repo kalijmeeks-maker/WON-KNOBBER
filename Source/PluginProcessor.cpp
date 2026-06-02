@@ -13,6 +13,8 @@ WonKnobberAudioProcessor::WonKnobberAudioProcessor()
 {
     addParameter (drive = new juce::AudioParameterFloat (
                       juce::ParameterID { ParamIDs::drive, 1 }, "Drive", 0.0f, 1.0f, 0.5f));
+    addParameter (mix = new juce::AudioParameterFloat (
+                      juce::ParameterID { ParamIDs::mix, 1 }, "Mix", 0.0f, 1.0f, 1.0f));
 }
 
 void WonKnobberAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
@@ -26,6 +28,19 @@ void WonKnobberAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
 
     convolution.prepare (sampleRate, samplesPerBlock);
     neuralModel.prepare (sampleRate, samplesPerBlock);
+
+    // Size dry scratch defensively (prepare block can be smaller than later processBlock blocks in some hosts/offline).
+    // 16384 covers offline render block sizes some hosts use (Logic/Reaper can push past 4k); cheap prealloc.
+    const int maxChans = juce::jmax (2, getTotalNumInputChannels());
+    int safeBlock = juce::jmax (16384, samplesPerBlock);
+    safeBlock = juce::jmax (safeBlock, 1);
+    dryBuffer.setSize (maxChans, safeBlock);
+    dryBuffer.clear();
+
+    // Smooth mix at audio rate; 15 ms ramp (in 10-20 ms range) per spec to kill zippers.
+    mixSmooth.reset (sampleRate, 0.015);
+
+    dryWet.prepare (sampleRate, samplesPerBlock);
 }
 
 void WonKnobberAudioProcessor::releaseResources()
@@ -33,6 +48,9 @@ void WonKnobberAudioProcessor::releaseResources()
     saturation.reset();
     convolution.reset();
     neuralModel.reset();
+
+    dryWet.reset();
+    mixSmooth.setCurrentAndTargetValue (mixSmooth.getTargetValue());
 }
 
 bool WonKnobberAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -73,11 +91,29 @@ void WonKnobberAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     if (numCh >= 2) atomicMaxMerge (peakInR, buffer.getMagnitude (1, 0, numSmps));
 
     saturation.setDrive (drive->get());
+
+    // Update mix target each block (from param); smoothing happens inside applyCrossfade.
+    if (mix != nullptr)
+        mixSmooth.setTargetValue (mix->get());
+
+    // Capture dry (pre-saturation) into scratch. Must be before any processing in the sat->conv chain.
+    const int nch = buffer.getNumChannels();
+    const int nsm = buffer.getNumSamples();
+    const int nsmCopy = juce::jmin (nsm, dryBuffer.getNumSamples());
+    for (int ch = 0; ch < nch && ch < dryBuffer.getNumChannels(); ++ch)
+        dryBuffer.copyFrom (ch, 0, buffer, ch, 0, nsmCopy);
+
+    // Debug guard for block size edges (non-realtime/offline can exceed last prepare's block).
+    jassert (nsm <= dryBuffer.getNumSamples());
+
     saturation.process (buffer);
     convolution.process (buffer);
     // neuralModel.process (buffer); // enabled once a model is loaded
 
-    // Output tap (post-chain).
+    // Equal-power dry/wet after the full chain. Uses processor's mixSmooth (advances per sample).
+    dryWet.applyCrossfade (mixSmooth, buffer, dryBuffer);
+
+    // Output tap (post-chain, after mix for final I/O meter).
     if (numCh >= 1) atomicMaxMerge (peakOutL, buffer.getMagnitude (0, 0, numSmps));
     if (numCh >= 2) atomicMaxMerge (peakOutR, buffer.getMagnitude (1, 0, numSmps));
 }
@@ -99,11 +135,13 @@ juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()
 
 void WonKnobberAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // Layout: [float drive][String currentVariant]. Backwards-compatible with the
-    // float-only state — older sets just won't have the variant byte after the float.
+    // Layout: [float drive][String currentVariant][float mix]. Mix is appended AFTER
+    // variant so old PR #27 states ([drive][variant]) load cleanly: variant reads
+    // exactly as before, then no bytes remain for mix → defaults to 1.0 (full wet).
     juce::MemoryOutputStream stream (destData, true);
     stream.writeFloat (drive->get());
     stream.writeString (currentVariant);
+    stream.writeFloat (mix != nullptr ? mix->get() : 1.0f);
 }
 
 void WonKnobberAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -111,12 +149,34 @@ void WonKnobberAudioProcessor::setStateInformation (const void* data, int sizeIn
     juce::MemoryInputStream stream (data, (size_t) sizeInBytes, false);
     if (stream.getNumBytesRemaining() >= (int) sizeof (float))
         *drive = stream.readFloat();
+
     if (stream.getNumBytesRemaining() > 0)
     {
         const auto v = stream.readString();
         if (v.isNotEmpty())
             currentVariant = v;
     }
+
+    if (stream.getNumBytesRemaining() >= (int) sizeof (float))
+        *mix = stream.readFloat();
+    else if (mix != nullptr)
+        *mix = 1.0f; // backwards-compatible: PR #27 states (drive+variant) default to full wet
+
+    // Extra trailing data (future versions) is ignored gracefully.
+
+    // Sanitise both params after load (defensive for corrupt/NaN/Inf/out-of-range/truncated mix bytes).
+    // AudioParameterFloat operator= does not auto-clamp; bad value here -> cos/sin(NaN) -> NaN audio in DryWet process.
+    // Default 1.0 for mix preserves "old presets load with full wet preserved".
+    auto sanitize = [] (juce::AudioParameterFloat* p, float def)
+    {
+        if (p == nullptr) return;
+        float v = p->get();
+        if (! std::isfinite (v)) v = def;
+        v = juce::jlimit (0.0f, 1.0f, v);
+        *p = v;
+    };
+    sanitize (drive, 0.5f);
+    sanitize (mix, 1.0f);
 }
 
 // JUCE plugin entry point
