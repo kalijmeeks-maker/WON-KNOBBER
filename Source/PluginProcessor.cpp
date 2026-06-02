@@ -161,18 +161,39 @@ void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
     activeSlot = 'A';
 }
 
+namespace
+{
+// The 8 factory voices (Claude Design's drive/mix/gem map). Display name + embedded XML run
+// in the same order; the gem variant lives in each XML so loading a preset changes the hero
+// stone (intentional per-voice identity).
+struct FactoryPreset
+{
+    const char* name;
+    const char* xml;
+    int xmlSize;
+};
+const FactoryPreset kFactoryPresets[] = {
+    { "TAPE HEAD", BinaryData::tape_head_xml, BinaryData::tape_head_xmlSize },
+    { "CONSOLE GLUE", BinaryData::console_glue_xml, BinaryData::console_glue_xmlSize },
+    { "FURNACE", BinaryData::furnace_xml, BinaryData::furnace_xmlSize },
+    { "VELVET", BinaryData::velvet_xml, BinaryData::velvet_xmlSize },
+    { "SUNDAY DRIVE", BinaryData::sunday_drive_xml, BinaryData::sunday_drive_xmlSize },
+    { "TUBE WARM", BinaryData::tube_warm_xml, BinaryData::tube_warm_xmlSize },
+    { "DIODE BITE", BinaryData::diode_bite_xml, BinaryData::diode_bite_xmlSize },
+    { "TRANSFORMER", BinaryData::transformer_xml, BinaryData::transformer_xmlSize },
+};
+} // namespace
+
 int WonKnobberAudioProcessor::getNumFactoryPresets() const
 {
-    return 2;
+    return (int) juce::numElementsInArray(kFactoryPresets);
 }
 
 juce::String WonKnobberAudioProcessor::getFactoryPresetName(int i) const
 {
-    if (i == 0)
-        return "Default";
-    if (i == 1)
-        return "Hot";
-    return {};
+    if (i < 0 || i >= getNumFactoryPresets())
+        return {};
+    return kFactoryPresets[i].name;
 }
 
 void WonKnobberAudioProcessor::loadFactoryPreset(int i)
@@ -180,14 +201,7 @@ void WonKnobberAudioProcessor::loadFactoryPreset(int i)
     if (i < 0 || i >= getNumFactoryPresets())
         return;
 
-    juce::String xmlText;
-    if (i == 0)
-        xmlText = juce::String::fromUTF8(BinaryData::Default_xml, BinaryData::Default_xmlSize);
-    else if (i == 1)
-        xmlText = juce::String::fromUTF8(BinaryData::Hot_xml, BinaryData::Hot_xmlSize);
-    else
-        return;
-
+    const auto xmlText = juce::String::fromUTF8(kFactoryPresets[i].xml, kFactoryPresets[i].xmlSize);
     if (auto xml = juce::XmlDocument::parse(xmlText))
     {
         auto vt = juce::ValueTree::fromXml(*xml);
@@ -406,26 +420,26 @@ static bool runPresetTransportAPITests()
     // num + names
     {
         int n = proc.getNumFactoryPresets();
-        bool nOk = (n == 2);
+        bool nOk = (n == 8);
         std::cout << "PRESET API [numFactory]: " << (nOk ? "PASS" : "FAIL") << " n=" << n << std::endl;
         if (!nOk)
             pass = false;
 
         juce::String n0 = proc.getFactoryPresetName(0);
         juce::String n1 = proc.getFactoryPresetName(1);
-        bool namesOk = (n0 == "Default" && n1 == "Hot");
+        bool namesOk = (n0 == "TAPE HEAD" && n1 == "CONSOLE GLUE");
         std::cout << "PRESET API [names]: " << (namesOk ? "PASS" : "FAIL") << " 0=" << n0 << " 1=" << n1 << std::endl;
         if (!namesOk)
             pass = false;
     }
 
-    // load factory (Hot has drive~0.7 variant=ruby)
+    // load factory (FURNACE = index 2, drive~0.86 variant=ruby)
     {
-        proc.loadFactoryPreset(1);
+        proc.loadFactoryPreset(2);
         float ld = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
         auto lv = proc.getCurrentVariant();
-        bool loadOk = (std::abs(ld - 0.7f) < 0.01f && lv == "ruby");
-        std::cout << "PRESET API [load Hot]: " << (loadOk ? "PASS" : "FAIL") << " drive=" << ld << " var=" << lv
+        bool loadOk = (std::abs(ld - 0.86f) < 0.01f && lv == "ruby");
+        std::cout << "PRESET API [load FURNACE]: " << (loadOk ? "PASS" : "FAIL") << " drive=" << ld << " var=" << lv
                   << std::endl;
         if (!loadOk)
             pass = false;
@@ -442,12 +456,12 @@ static bool runPresetTransportAPITests()
 
     // A/B switch saves outgoing, applies target
     {
-        // from Hot on A, tweak live, switch to B (saves tweak to A, live gets B's ~0.7)
+        // from FURNACE on A, tweak live, switch to B (saves tweak to A, live gets B's ~0.86)
         if (auto* d = proc.getDriveParameter())
             *d = 0.42f;
         proc.setActiveSlot('B');
         float liveD = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;
-        bool toBOK = (proc.getActiveSlot() == 'B' && std::abs(liveD - 0.7f) < 0.01f);
+        bool toBOK = (proc.getActiveSlot() == 'B' && std::abs(liveD - 0.86f) < 0.01f);
         // now switch back to A: should get the saved 0.42
         proc.setActiveSlot('A');
         liveD = proc.getDriveParameter() ? proc.getDriveParameter()->get() : 0.0f;

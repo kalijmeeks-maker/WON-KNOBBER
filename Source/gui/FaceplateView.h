@@ -78,6 +78,9 @@ public:
     void setActiveSlot(char s); // 'A'/'B'
     char getActiveSlot() const { return activeSlot; }
 
+    // Editor sets this from the processor so the ‹ › chevrons wrap over the real bank size.
+    void setNumFactoryPresets(int n) { numFactoryPresets = juce::jmax(1, n); }
+
 private:
     // Design reference is the 960x600 PRO chassis; controls are placed in its coords.
     static constexpr int kRefW = 960;
@@ -97,9 +100,10 @@ private:
     juce::Image faceplate; // embedded photoreal chassis (BinaryData)
 
     // Phase 2b footer preset strip + transport (placed via anchors; drawn + hit-tested inline, no extra child comps).
-    juce::String currentPresetName{"Default"};
+    juce::String currentPresetName{"TAPE HEAD"};
     char activeSlot{'A'};
     int currentPresetIndex{0};
+    int numFactoryPresets{8}; // bank size; editor overrides via setNumFactoryPresets()
 
     // Cached scaled rects (from place() in resized) for drawing the overlays and mouse hit-testing in footer.
     juce::Rectangle<int> presetStripBounds, transportBounds;
