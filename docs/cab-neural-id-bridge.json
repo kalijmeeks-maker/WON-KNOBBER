@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "date": "2026-06-02",
+  "note": "Design UI/preset strings (spaces, marketing names) ↔ Grok manifest / CC WonKnobberState enum ids (underscore, short). UI paints left column; state + BinaryData use right.",
+  "cab_ir": [
+    { "design": "FLAT", "state_id": "FLAT", "binary_file": "ir_flat.wav" },
+    { "design": "STUDIO RIBBON", "state_id": "STUDIO_RIBBON", "binary_file": "ir_studio_ribbon.wav" },
+    { "design": "VINTAGE 4x12", "state_id": "VINTAGE_4X12", "binary_file": "ir_vintage_4x12.wav" },
+    { "design": "CONSOLE BOX", "state_id": "CONSOLE_BOX", "binary_file": "ir_console_box.wav" },
+    { "design": "OLD RADIO", "state_id": "OLD_RADIO", "binary_file": "ir_old_radio.wav" },
+    { "design": "IRON CORE", "state_id": "IRON_CORE", "binary_file": "ir_iron_core.wav" }
+  ],
+  "neural_model": [
+    { "design": "NONE", "state_id": "NONE", "binary_file": null },
+    { "design": "TAPE-1971", "state_id": "TAPE", "binary_file": "model_tape.json" },
+    { "design": "VALVE-CLASS A", "state_id": "VALVE", "binary_file": "model_valve.json" },
+    { "design": "TRANSISTOR-FET", "state_id": "TRANSISTOR", "binary_file": "model_transistor.json" },
+    { "design": "IRON-TRANSFORMER", "state_id": "IRON", "binary_file": "model_iron.json" }
+  ],
+  "factory_voice_preset_values": {
+    "note": "Authoritative cab/neural assignments from voice-cab-neural-map.md — state_id column for WonKnobberState + factory XML",
+    "voices": [
+      { "index": 0, "name": "TAPE HEAD", "cabIr": "STUDIO_RIBBON", "neuralModel": "TAPE", "cabEngage": true, "neuralEngage": true },
+      { "index": 1, "name": "CONSOLE GLUE", "cabIr": "FLAT", "neuralModel": "NONE", "cabEngage": false, "neuralEngage": false },
+      { "index": 2, "name": "FURNACE", "cabIr": "VINTAGE_4X12", "neuralModel": "VALVE", "cabEngage": true, "neuralEngage": true },
+      { "index": 3, "name": "VELVET", "cabIr": "STUDIO_RIBBON", "neuralModel": "TAPE", "cabEngage": true, "neuralEngage": true },
+      { "index": 4, "name": "SUNDAY DRIVE", "cabIr": "OLD_RADIO", "neuralModel": "TRANSISTOR", "cabEngage": true, "neuralEngage": true },
+      { "index": 5, "name": "TUBE WARM", "cabIr": "CONSOLE_BOX", "neuralModel": "VALVE", "cabEngage": true, "neuralEngage": true },
+      { "index": 6, "name": "DIODE BITE", "cabIr": "VINTAGE_4X12", "neuralModel": "TRANSISTOR", "cabEngage": true, "neuralEngage": true },
+      { "index": 7, "name": "TRANSFORMER", "cabIr": "IRON_CORE", "neuralModel": "IRON", "cabEngage": true, "neuralEngage": true }
+    ]
+  }
+}
