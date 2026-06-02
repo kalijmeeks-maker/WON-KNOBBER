@@ -30,9 +30,9 @@ void WonKnobberAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     neuralModel.prepare (sampleRate, samplesPerBlock);
 
     // Size dry scratch defensively (prepare block can be smaller than later processBlock blocks in some hosts/offline).
-    // 2048 is safe upper for most audio blocks; cheap prealloc.
+    // 16384 covers offline render block sizes some hosts use (Logic/Reaper can push past 4k); cheap prealloc.
     const int maxChans = juce::jmax (2, getTotalNumInputChannels());
-    int safeBlock = juce::jmax (2048, samplesPerBlock);
+    int safeBlock = juce::jmax (16384, samplesPerBlock);
     safeBlock = juce::jmax (safeBlock, 1);
     dryBuffer.setSize (maxChans, safeBlock);
     dryBuffer.clear();
@@ -135,12 +135,13 @@ juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()
 
 void WonKnobberAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // Layout: [float drive][float mix][String currentVariant]. Backwards-compatible.
-    // Old float-only or drive+variant states will be handled in setStateInformation.
+    // Layout: [float drive][String currentVariant][float mix]. Mix is appended AFTER
+    // variant so old PR #27 states ([drive][variant]) load cleanly: variant reads
+    // exactly as before, then no bytes remain for mix → defaults to 1.0 (full wet).
     juce::MemoryOutputStream stream (destData, true);
     stream.writeFloat (drive->get());
-    stream.writeFloat (mix != nullptr ? mix->get() : 1.0f);
     stream.writeString (currentVariant);
+    stream.writeFloat (mix != nullptr ? mix->get() : 1.0f);
 }
 
 void WonKnobberAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
@@ -149,17 +150,17 @@ void WonKnobberAudioProcessor::setStateInformation (const void* data, int sizeIn
     if (stream.getNumBytesRemaining() >= (int) sizeof (float))
         *drive = stream.readFloat();
 
-    if (stream.getNumBytesRemaining() >= (int) sizeof (float))
-        *mix = stream.readFloat();
-    else if (mix != nullptr)
-        *mix = 1.0f; // backwards-compatible: old states (only drive float) default to full wet
-
     if (stream.getNumBytesRemaining() > 0)
     {
         const auto v = stream.readString();
         if (v.isNotEmpty())
             currentVariant = v;
     }
+
+    if (stream.getNumBytesRemaining() >= (int) sizeof (float))
+        *mix = stream.readFloat();
+    else if (mix != nullptr)
+        *mix = 1.0f; // backwards-compatible: PR #27 states (drive+variant) default to full wet
 
     // Extra trailing data (future versions) is ignored gracefully.
 

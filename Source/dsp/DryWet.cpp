@@ -5,19 +5,19 @@
 
 void DryWet::prepare (double sampleRate, int blockSize)
 {
-    // TODO: implement
+    // No-op: stateless helper. The mix SmoothedValue lives on the processor.
     juce::ignoreUnused (sampleRate, blockSize);
 }
 
 void DryWet::process (juce::AudioBuffer<float>& buffer)
 {
-    // TODO: implement
+    // No-op: unused. Processor calls applyCrossfade directly.
     juce::ignoreUnused (buffer);
 }
 
 void DryWet::reset()
 {
-    // TODO: implement
+    // No-op: stateless helper.
 }
 
 void DryWet::applyCrossfade (juce::SmoothedValue<float>& mix,
