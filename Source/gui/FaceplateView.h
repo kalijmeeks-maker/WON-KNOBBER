@@ -9,18 +9,20 @@
 
 #include "BypassLED.h"
 #include "KnobLookAndFeel.h"
+#include "MixKnob.h"
 #include "VUMeter.h"
 
 class FaceplateView : public juce::Component
 {
 public:
     FaceplateView();
-    ~FaceplateView() override;
+    ~FaceplateView() override; // mixKnob cleans its own LNF in its dtor; drive explicit in .cpp
 
     void paint (juce::Graphics& g) override;
     void resized() override;
 
     juce::Slider& getDriveKnob() { return driveKnob; }
+    juce::Slider& getMixKnob()  { return mixKnob.getSlider(); }
     VUMeter& getVUMeter() { return vuMeter; }
     BypassLED& getBypassLED() { return bypassLed; }
 
@@ -31,6 +33,7 @@ private:
 
     KnobLookAndFeel knobLnf;
     juce::Slider driveKnob;
+    MixKnob mixKnob;     // DRY/WET mix; reuses KnobLookAndFeel without filmstrip (ellipse fallback, always circular)
     VUMeter vuMeter;     // Phase 2: live I/O meters (not shown yet)
     BypassLED bypassLed; // Phase 2: live bypass telltale (not shown yet)
 

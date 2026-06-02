@@ -19,6 +19,19 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor (WonKnobberAudioP
         };
     }
 
+    auto& mixKnob = faceplate.getMixKnob();
+    if (auto* mixParam = processorRef.getMixParameter())
+    {
+        mixKnob.setValue (mixParam->get(), juce::dontSendNotification);
+        mixKnob.onValueChange = [this, &mixKnob, mixParam]
+        {
+            *mixParam = (float) mixKnob.getValue();
+            juce::ignoreUnused (this);
+        };
+    }
+
+    // Note: knob values may desync on external state restore (e.g. host preset load) until param updates fire;
+    // this is pre-existing pattern for drive; host usually pushes value change to UI.
     setSize (960, 600);
 }
 

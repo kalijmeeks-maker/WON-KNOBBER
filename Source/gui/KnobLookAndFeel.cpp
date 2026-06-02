@@ -28,9 +28,14 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
     else
     {
         // Placeholder until the filmstrip asset is wired in.
+        // Square dest centred (matches filmstrip path) so non-square bounds rects (e.g. mix_knob json rect [758,346,134,110])
+        // still produce circular knob, not stretched oval. Premium round control always.
+        const int side = juce::jmin (width, height);
+        const auto dest = juce::Rectangle<int> (0, 0, side, side).withCentre (bounds.getCentre());
+
         g.setColour (juce::Colour (0xff2a2d2e));
-        g.fillEllipse (bounds.toFloat());
+        g.fillEllipse (dest.toFloat());
         g.setColour (juce::Colour (0xffffb14e));
-        g.drawEllipse (bounds.toFloat().reduced (2.0f), 2.0f);
+        g.drawEllipse (dest.toFloat().reduced (2.0f), 2.0f);
     }
 }

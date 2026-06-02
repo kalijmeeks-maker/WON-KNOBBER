@@ -22,12 +22,15 @@ FaceplateView::FaceplateView()
     driveKnob.setLookAndFeel (&knobLnf);
 
     addAndMakeVisible (driveKnob);
+    addAndMakeVisible (mixKnob);
     // vuMeter / bypassLed: Phase 2 — not drawn over the photoreal chassis yet.
+    // mixKnob sets up its own Slider + KnobLookAndFeel (non-filmstrip) internally.
 }
 
 FaceplateView::~FaceplateView()
 {
     driveKnob.setLookAndFeel (nullptr);
+    // mixKnob's internal LNF (and its slider) cleaned in MixKnob::~ ; no shared LNF.
 }
 
 void FaceplateView::paint (juce::Graphics& g)
@@ -55,4 +58,13 @@ void FaceplateView::resized()
         juce::roundToInt ((float) knobRef.getY()     * sy),
         juce::roundToInt ((float) knobRef.getWidth()  * sx),
         juce::roundToInt ((float) knobRef.getHeight() * sy)));
+
+    // MIX (DRY/WET) knob — from /.../faceplate-pro-anchors.json "mix_knob" rect [758,346,134,110] centre [825,392].
+    // Scaled exactly like driveKnob. LNF fallback now forces square dest (see KnobLookAndFeel.cpp) so always circular even in non-square well.
+    const auto mixRef = juce::Rectangle<int> (758, 346, 134, 110);
+    mixKnob.setBounds (juce::Rectangle<int> (
+        juce::roundToInt ((float) mixRef.getX()     * sx),
+        juce::roundToInt ((float) mixRef.getY()     * sy),
+        juce::roundToInt ((float) mixRef.getWidth()  * sx),
+        juce::roundToInt ((float) mixRef.getHeight() * sy)));
 }
