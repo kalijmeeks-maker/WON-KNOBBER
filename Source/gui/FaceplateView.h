@@ -8,6 +8,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "BypassLED.h"
+#include "DbReadout.h"
 #include "GemChip.h"
 #include "HarmonicBars.h"
 #include "IOMeter.h"
@@ -31,11 +32,14 @@ public:
     juce::Slider& getMixKnob()  { return mixKnob.getSlider(); }
     BypassLED& getBypassLED() { return bypassLed; }
 
-    // Push the current Drive (0..1) to the live scopes (transfer curve + harmonics).
+    // Push the current Drive (0..1) to the live scopes (transfer curve + harmonics)
+    // AND the dB readout. Single source-of-truth so the well and the scopes can never
+    // drift relative to the actual parameter.
     void setDrive (float d)
     {
         transferCurve.setDrive (d);
         harmonicBars.setDrive (d);
+        dbReadout.setDrive (d);
     }
 
     // Push per-block linear peaks (pre + post chain) into the I/O meter at the
@@ -75,6 +79,7 @@ private:
     GemChip gemChip;             // persistent "choose your stone" pill below the knob
     IOMeter    ioMeter;    // Phase 2b: twin IN/OUT peak meters (io_meters anchor)
     StatusLEDs statusLEDs; // Phase 2b: POWER / SIG / CLIP dome LEDs (top strip)
+    DbReadout  dbReadout;  // Phase 2b: drive value -> dB readout (db_readout anchor)
     BypassLED  bypassLed;  // Phase 2b: live bypass telltale (not shown yet)
 
     juce::Image faceplate; // embedded photoreal chassis (BinaryData)

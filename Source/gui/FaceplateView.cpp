@@ -68,6 +68,7 @@ FaceplateView::FaceplateView()
 
     addAndMakeVisible (ioMeter);
     addAndMakeVisible (statusLEDs);
+    addAndMakeVisible (dbReadout);
 
     // bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
@@ -125,4 +126,7 @@ void FaceplateView::resized()
     // + 7 → x=799 .. 901 (102 wide), y=48 .. 62 (14 tall). StatusLEDs derives the
     // three centres internally as fractions of its bounds.
     statusLEDs.setBounds (place (799, 48, 102, 14));
+
+    // Drive -> dB readout in the recessed well below the hero knob.
+    dbReadout.setBounds (place (421, 423, 161, 51));
 }
