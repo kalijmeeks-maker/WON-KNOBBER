@@ -81,6 +81,21 @@ int main(int argc, char** argv)
         writePNG(fp, outDir.getChildFile("front_bypassed.png"));
     }
 
+    // ---- Front "voice active" — for Design's P0/P1 front pixel-check ----
+    // A loaded voice + knob mid-travel, with the I/O meters + SIG LED driven (pushLevels lights
+    // them; harmonics/transfer already track drive). Separate instance so the lit state doesn't
+    // bleed into the clean/bypassed renders. Two pushes settle the meter ballistics pre-snapshot.
+    {
+        FaceplateView fp;
+        fp.setSize(960, 600);
+        fp.setPresetDisplayName("TAPE HEAD");
+        fp.setVariant("diamond");
+        fp.setDrive(0.5f);
+        fp.pushLevels(0.72f, 0.66f, 0.80f, 0.74f, 0.2f);
+        fp.pushLevels(0.72f, 0.66f, 0.80f, 0.74f, 0.033f);
+        writePNG(fp, outDir.getChildFile("front_voice_active.png"));
+    }
+
     std::cout << "Done.\n";
     return 0;
 }
