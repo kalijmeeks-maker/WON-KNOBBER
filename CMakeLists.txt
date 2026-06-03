@@ -15,6 +15,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
+# ---- RTNeural (BSD-3) via FetchContent — neural character stage. STL backend = header-only,
+#      no Eigen submodule, smallest dep graph for CI (per the RTNeural-vs-ONNX spike). ----
+set(RTNEURAL_STL ON CACHE BOOL "" FORCE)
+FetchContent_Declare(
+    RTNeural
+    GIT_REPOSITORY https://github.com/jatinchowdhury18/RTNeural.git
+    GIT_TAG        1fb1f075a5d66e85bfc8f488c3f3626840cb3a1d
+)
+FetchContent_MakeAvailable(RTNeural)
+
 # ---- Plugin formats: VST3 everywhere, AU + AUv3 on macOS ----
 set(WK_FORMATS VST3)
 if(APPLE)
@@ -63,6 +73,16 @@ juce_add_binary_data(WonKnobberBinaryData SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/tube_warm.xml"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/diode_bite.xml"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/factory_presets/transformer.xml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_flat.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_studio_ribbon.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_vintage_4x12.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_console_box.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_old_radio.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/IRs/ir_iron_core.wav"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Models/model_tape.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Models/model_valve.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Models/model_transistor.json"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Models/model_iron.json"
 )
 
 target_include_directories(WonKnobber PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
@@ -78,10 +98,17 @@ target_link_libraries(WonKnobber
         WonKnobberBinaryData
         juce::juce_audio_utils
         juce::juce_dsp
+        RTNeural
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags
 )
+
+# RTNeural's own headers must not trip OUR -Werror — treat its includes as SYSTEM.
+get_target_property(_rtneural_inc RTNeural INTERFACE_INCLUDE_DIRECTORIES)
+if(_rtneural_inc)
+    target_include_directories(WonKnobber SYSTEM PRIVATE ${_rtneural_inc})
+endif()
 
 # ---- Treat warnings as errors on OUR target only (never on JUCE itself) ----
 if(MSVC)
