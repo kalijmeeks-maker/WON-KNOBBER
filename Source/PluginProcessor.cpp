@@ -7,6 +7,9 @@
 #include "PluginEditor.h"
 #include "util/Parameters.h"
 
+#include <cmath>
+#include <iostream>
+
 WonKnobberAudioProcessor::WonKnobberAudioProcessor()
     : juce::AudioProcessor(BusesProperties()
                                .withInput("Input", juce::AudioChannelSet::stereo(), true)
@@ -30,7 +33,13 @@ void WonKnobberAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
     setLatencySamples(saturation.getLatencySamples());
 
     convolution.prepare(sampleRate, samplesPerBlock);
+    convolution.setEngaged(cabEngage);
+    if (cabEngage)
+        convolution.setIr(currentCabIr); // re-apply IR for the (possibly new) sample rate
     neuralModel.prepare(sampleRate, samplesPerBlock);
+    neuralModel.setEngaged(neuralEngage);
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
 
     // Size dry scratch defensively (prepare block can be smaller than later processBlock blocks in some hosts/offline).
     // 16384 covers offline render block sizes some hosts use (Logic/Reaper can push past 4k); cheap prealloc.
@@ -123,7 +132,7 @@ void WonKnobberAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
 
     saturation.process(buffer);
     convolution.process(buffer);
-    // neuralModel.process (buffer); // enabled once a model is loaded
+    neuralModel.process(buffer); // gated internally: passthrough unless neuralEngage + a model is loaded
 
     // Equal-power dry/wet after the full chain. Uses processor's mixSmooth (advances per sample).
     dryWet.applyCrossfade(mixSmooth, buffer, dryBuffer);
@@ -152,6 +161,10 @@ WonKnobberState WonKnobberAudioProcessor::getCurrentState() const noexcept
     s.mix = mix ? mix->get() : 1.0f;
     s.variant = currentVariant;
     s.bypass = bypassState;
+    s.cabIr = currentCabIr;
+    s.neuralModel = currentNeuralModel;
+    s.cabEngage = cabEngage;
+    s.neuralEngage = neuralEngage;
     return s;
 }
 
@@ -163,6 +176,22 @@ void WonKnobberAudioProcessor::applyStateToParams(const WonKnobberState& st) noe
     if (mix != nullptr)
         *mix = st.mix;
     bypassState = st.bypass;
+    currentCabIr = st.cabIr;
+    currentNeuralModel = st.neuralModel;
+    cabEngage = st.cabEngage;
+    neuralEngage = st.neuralEngage;
+
+    // Reflect cab selection into the convolution stage (message thread). The engage gate is atomic
+    // and the IR load is queued wait-free by JUCE. Neural wiring lands in a later PR.
+    convolution.setEngaged(cabEngage);
+    if (cabEngage)
+        convolution.setIr(currentCabIr);
+
+    // Reflect neural selection into the RTNeural stage (message thread). Engage gate is atomic;
+    // the model is built + atomically swapped in by NeuralModel. Off by default until a voice engages it.
+    neuralModel.setEngaged(neuralEngage);
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
 }
 
 void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
@@ -171,6 +200,38 @@ void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
     slotA = st;
     slotB = st;
     activeSlot = 'A';
+    // Seat the "loaded voice" baseline so isDirty() reads false right after any full apply
+    // (ctor init, factory load, host recall). Manual param edits after this flip it true.
+    loadedVoice = st;
+}
+
+bool WonKnobberAudioProcessor::isDirty() const
+{
+    // Design call (modified-dot spec): only the four hidden cab/neural identity fields count as
+    // "modified" — NOT drive/mix. Riding DRIVE/MIX is the expected one-knob interaction and is
+    // already visible on the face; the dot exists to surface a rear override you can't otherwise see.
+    const WonKnobberState live = getCurrentState();
+    if (live.cabIr != loadedVoice.cabIr)
+        return true;
+    if (live.neuralModel != loadedVoice.neuralModel)
+        return true;
+    if (live.cabEngage != loadedVoice.cabEngage)
+        return true;
+    if (live.neuralEngage != loadedVoice.neuralEngage)
+        return true;
+    return false;
+}
+
+void WonKnobberAudioProcessor::revertToLoadedPreset()
+{
+    // Design call: revert ONLY the four identity fields (cab/neural) to the loaded voice; leave
+    // drive/mix/variant where the user has them. Clears the dirty flag without touching the knobs.
+    WonKnobberState s = getCurrentState();
+    s.cabIr = loadedVoice.cabIr;
+    s.neuralModel = loadedVoice.neuralModel;
+    s.cabEngage = loadedVoice.cabEngage;
+    s.neuralEngage = loadedVoice.neuralEngage;
+    applyStateToParams(s);
 }
 
 namespace
@@ -527,6 +588,48 @@ static bool runPresetTransportAPITests()
         std::cout << "PRESET API [undoLast]: " << (uOK ? "PASS" : "FAIL") << " " << before << "->" << after
                   << std::endl;
         if (!uOK)
+            pass = false;
+    }
+
+    // isDirty / revertToLoadedPreset: only the four cab/neural identity fields count as "modified"
+    // (Design call — NOT drive/mix). Loading a voice seats the baseline (clean), and riding DRIVE/MIX
+    // must stay CLEAN. Divergence of the four fields -> dirty is driven by the rear-panel override
+    // (PR 4); until those setters land the four fields only change via a preset load, which re-stamps.
+    {
+        proc.loadFactoryPreset(0); // TAPE HEAD
+        bool cleanAfterLoad = !proc.isDirty();
+
+        if (auto* d = proc.getDriveParameter())
+            *d = 0.42f + 0.2f; // ride DRIVE — must stay CLEAN under the four-field rule
+        bool cleanAfterDrive = !proc.isDirty();
+
+        proc.loadFactoryPreset(2);   // FURNACE: different cab/neural — re-stamps, still clean
+        bool cleanAfterReload = !proc.isDirty();
+        proc.revertToLoadedPreset(); // no-op while clean
+        bool cleanAfterRevert = !proc.isDirty();
+
+        bool dirtyOK = cleanAfterLoad && cleanAfterDrive && cleanAfterReload && cleanAfterRevert;
+        std::cout << "PRESET API [isDirty four-field]: " << (dirtyOK ? "PASS" : "FAIL")
+                  << " load=" << (cleanAfterLoad ? 1 : 0) << " drive-clean=" << (cleanAfterDrive ? 1 : 0)
+                  << " reload=" << (cleanAfterReload ? 1 : 0) << " revert=" << (cleanAfterRevert ? 1 : 0) << std::endl;
+        if (!dirtyOK)
+            pass = false;
+    }
+
+    // Design check: EVERY factory voice must read isDirty()==false immediately on load — i.e. each
+    // baked cab/neural XML id exactly matches the loadedVoice snapshot, so no voice loads already-dirty.
+    {
+        bool allClean = true;
+        const int nFac = proc.getNumFactoryPresets();
+        for (int i = 0; i < nFac; ++i)
+        {
+            proc.loadFactoryPreset(i);
+            if (proc.isDirty())
+                allClean = false;
+        }
+        std::cout << "PRESET API [all voices load clean]: " << (allClean ? "PASS" : "FAIL") << " n=" << nFac
+                  << std::endl;
+        if (!allClean)
             pass = false;
     }
 

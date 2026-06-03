@@ -67,7 +67,14 @@ public:
     // Phase 2b: minimal factory preset API (embedded via BinaryData; 2 presets for this slice).
     int getNumFactoryPresets() const;
     juce::String getFactoryPresetName(int i) const;
-    void loadFactoryPreset(int i); // parses xml, applyState (resets slots + active=A)
+    void loadFactoryPreset(int i); // parses xml, applyState (resets slots + active=A); snapshots the loaded voice
+
+    // Modified-from-preset: true if the live state diverges from the last loaded voice in ANY of the six
+    // identity fields (drive/mix/cabIr/neuralModel/cabEngage/neuralEngage). Floats compared with 1e-4 epsilon,
+    // strings + bools compared exactly. Drives the footer "modified" ember dot.
+    bool isDirty() const;
+    // Re-apply the snapshot of the last loaded voice, discarding manual edits (clears the dirty flag).
+    void revertToLoadedPreset();
 
     // Phase 2b: A/B compare slots (in-memory; saved in host state via slots in VT).
     char getActiveSlot() const;
@@ -93,9 +100,21 @@ private:
     juce::AudioParameterFloat* mix{nullptr};   // 0.0 - 1.0, default 1.0 (full wet for backwards compat)
 
     std::atomic<bool> bypassState{false}; // bypass rocker; persisted; read on audio thread (true bypass = dry passthrough)
+
+    // Cab + neural slot selection (persisted UI state, like variant; NOT automatable params).
+    // Defaults OFF so legacy sessions keep identical audio.
+    juce::String currentCabIr{"FLAT"};
+    juce::String currentNeuralModel{"NONE"};
+    bool cabEngage{false};
+    bool neuralEngage{false};
     WonKnobberState slotA;   // A/B slots for future transport; initialised to current; round-tripped via host state
     WonKnobberState slotB;
     char activeSlot{'A'}; // current compare slot; 'A' or 'B'; transient (not in state blob)
+
+    // Snapshot of the voice last applied via loadFactoryPreset (or the ctor/state init). isDirty() compares the
+    // live state against this to drive the "modified-from-preset" indicator. Transient (not in the state blob);
+    // a host recall re-seats it via applyState so a freshly recalled session reads as un-modified.
+    WonKnobberState loadedVoice;
 
     Saturation saturation;
     Convolution convolution;
