@@ -7,6 +7,9 @@
 #include "PluginEditor.h"
 #include "util/Parameters.h"
 
+#include <cmath>
+#include <iostream>
+
 WonKnobberAudioProcessor::WonKnobberAudioProcessor()
     : juce::AudioProcessor(BusesProperties()
                                .withInput("Input", juce::AudioChannelSet::stereo(), true)
@@ -185,6 +188,35 @@ void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
     slotA = st;
     slotB = st;
     activeSlot = 'A';
+    // Seat the "loaded voice" baseline so isDirty() reads false right after any full apply
+    // (ctor init, factory load, host recall). Manual param edits after this flip it true.
+    loadedVoice = st;
+}
+
+bool WonKnobberAudioProcessor::isDirty() const
+{
+    const WonKnobberState live = getCurrentState();
+    constexpr float eps = 1.0e-4f;
+    if (std::abs(live.drive - loadedVoice.drive) > eps)
+        return true;
+    if (std::abs(live.mix - loadedVoice.mix) > eps)
+        return true;
+    if (live.cabIr != loadedVoice.cabIr)
+        return true;
+    if (live.neuralModel != loadedVoice.neuralModel)
+        return true;
+    if (live.cabEngage != loadedVoice.cabEngage)
+        return true;
+    if (live.neuralEngage != loadedVoice.neuralEngage)
+        return true;
+    return false;
+}
+
+void WonKnobberAudioProcessor::revertToLoadedPreset()
+{
+    // Re-apply the snapshot to live params/variant (does not disturb A/B slots or the active selection;
+    // applyStateToParams leaves loadedVoice intact so the dirty flag clears cleanly).
+    applyStateToParams(loadedVoice);
 }
 
 namespace
@@ -541,6 +573,27 @@ static bool runPresetTransportAPITests()
         std::cout << "PRESET API [undoLast]: " << (uOK ? "PASS" : "FAIL") << " " << before << "->" << after
                   << std::endl;
         if (!uOK)
+            pass = false;
+    }
+
+    // isDirty / revertToLoadedPreset: a fresh factory load is clean; a manual tweak to any of the six
+    // identity fields flips dirty; revert restores the baseline and clears it.
+    {
+        proc.loadFactoryPreset(0); // TAPE HEAD: drive=0.42, cab/neural engaged
+        bool cleanAfterLoad = !proc.isDirty();
+
+        if (auto* d = proc.getDriveParameter())
+            *d = 0.42f + 0.2f; // diverge drive past the 1e-4 epsilon
+        bool dirtyAfterTweak = proc.isDirty();
+
+        proc.revertToLoadedPreset();
+        float reverted = proc.getDriveParameter() ? proc.getDriveParameter()->get() : -1.0f;
+        bool cleanAfterRevert = !proc.isDirty() && std::abs(reverted - 0.42f) < 1.0e-4f;
+
+        bool dirtyOK = cleanAfterLoad && dirtyAfterTweak && cleanAfterRevert;
+        std::cout << "PRESET API [isDirty/revert]: " << (dirtyOK ? "PASS" : "FAIL") << " load=" << (cleanAfterLoad ? 1 : 0)
+                  << " tweak=" << (dirtyAfterTweak ? 1 : 0) << " revert=" << (cleanAfterRevert ? 1 : 0) << std::endl;
+        if (!dirtyOK)
             pass = false;
     }
 

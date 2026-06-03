@@ -72,11 +72,15 @@ public:
     std::function<void(int)> onFactoryPresetSelected;           // arg = 0..N-1 factory index to load
     std::function<void(char)> onActiveSlotSelected;             // 'A' or 'B'
     std::function<void(const juce::String&)> onTransportAction; // "save", "load", "undo", "randomize"
+    std::function<void()> onRevertToPreset;                     // fired by clicking the "modified" ember dot
 
     // Called by editor after preset load / slot switch / state recall to keep display in sync.
     void setPresetDisplayName(const juce::String& name);
     void setActiveSlot(char s); // 'A'/'B'
     char getActiveSlot() const { return activeSlot; }
+
+    // Editor pushes the processor's isDirty() at the timer rate; lights the ember dot beside the preset name.
+    void setModified(bool isModified);
 
     // Editor sets this from the processor so the ‹ › chevrons wrap over the real bank size.
     void setNumFactoryPresets(int n) { numFactoryPresets = juce::jmax(1, n); }
@@ -104,11 +108,13 @@ private:
     char activeSlot{'A'};
     int currentPresetIndex{0};
     int numFactoryPresets{8}; // bank size; editor overrides via setNumFactoryPresets()
+    bool modified{false};     // "modified-from-preset" — drives the ember dot beside the name
 
     // Cached scaled rects (from place() in resized) for drawing the overlays and mouse hit-testing in footer.
     juce::Rectangle<int> presetStripBounds, transportBounds;
     juce::Rectangle<int> chevLeftBounds, chevRightBounds, aButtonBounds, bButtonBounds;
     juce::Rectangle<int> presetNameBounds; // the engraved LED-style display area inside strip
+    juce::Rectangle<int> modifiedDotBounds; // small ember dot + click hit-target, right of the name LED
     juce::Rectangle<int> saveBtnBounds, loadBtnBounds, undoBtnBounds, randBtnBounds;
 
     void drawPresetStrip(juce::Graphics& g);

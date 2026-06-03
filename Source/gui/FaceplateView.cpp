@@ -156,6 +156,16 @@ void FaceplateView::resized()
         const int chevRightStartGuess = ps.getRight() - margin - (2 * abW + gap) - gap - chevW;
         const int nameW = juce::jmax(80, chevRightStartGuess - x);
         presetNameBounds = juce::Rectangle<int>(x, ps.getY() + margin / 2, nameW, ps.getHeight() - margin);
+
+        // "Modified" ember dot: a 6px (ref-scaled) dot just inside the name LED's right edge,
+        // vertically centred. The hit-target is padded for an easy click, kept within the name box
+        // so it never overlaps the right chevron.
+        const int dotSize = juce::jmax(6, ps.getHeight() / 4);
+        const int hit = juce::jmax(dotSize + 6, ps.getHeight() - margin);
+        const int dotCx = presetNameBounds.getRight() - dotSize / 2 - 4;
+        const int dotCy = presetNameBounds.getCentreY();
+        modifiedDotBounds = juce::Rectangle<int>(dotCx - hit / 2, dotCy - hit / 2, hit, hit);
+
         x += nameW + gap;
 
         chevRightBounds = juce::Rectangle<int>(x, ps.getY() + (ps.getHeight() - chevH) / 2, chevW, chevH);
@@ -208,9 +218,26 @@ void FaceplateView::setActiveSlot(char s)
     }
 }
 
+void FaceplateView::setModified(bool isModified)
+{
+    if (isModified != modified)
+    {
+        modified = isModified;
+        repaint();
+    }
+}
+
 void FaceplateView::mouseDown(const juce::MouseEvent& e)
 {
     const auto pos = e.getPosition();
+
+    // "Modified" ember dot — only clickable while lit; reverts the live state to the loaded preset.
+    if (modified && modifiedDotBounds.contains(pos))
+    {
+        if (onRevertToPreset)
+            onRevertToPreset();
+        return;
+    }
 
     if (chevLeftBounds.contains(pos))
     {
@@ -296,6 +323,25 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
         g.setFont(juce::Font(juce::FontOptions(fontH).withStyle("Bold")));
         const juce::String disp = currentPresetName.toUpperCase();
         g.drawText(disp, presetNameBounds, juce::Justification::centred, false);
+    }
+
+    // "Modified-from-preset" ember dot — shown only when the live state diverges from the loaded voice.
+    // A 6px dot drawn at the centre of its (padded) hit-target, just inside the name LED's right edge.
+    if (modified && !modifiedDotBounds.isEmpty())
+    {
+        const float dotD = juce::jmax(6.0f, h * 0.25f);
+        const auto centre = modifiedDotBounds.getCentre().toFloat();
+        const juce::Rectangle<float> dot(centre.x - dotD * 0.5f, centre.y - dotD * 0.5f, dotD, dotD);
+        // Bonus vertical gradient (#ffd28a -> #ff8800 -> #a35d00); the solid #ff8800 mid-stop is the
+        // required colour, so it still reads correct if a renderer ignores the gradient.
+        juce::ColourGradient grad(juce::Colour(0xffffd28a), dot.getCentreX(), dot.getY(), juce::Colour(0xffa35d00),
+                                  dot.getCentreX(), dot.getBottom(), false);
+        grad.addColour(0.5, juce::Colour(0xffff8800));
+        g.setGradientFill(grad);
+        g.fillEllipse(dot);
+        // Subtle ember rim so it sits convincingly in the brushed-metal recess.
+        g.setColour(juce::Colour(0xff5a3300).withAlpha(0.6f));
+        g.drawEllipse(dot, 0.6f);
     }
 
     // Chevrons (‹ ›) — clickable, tone-on-tone.

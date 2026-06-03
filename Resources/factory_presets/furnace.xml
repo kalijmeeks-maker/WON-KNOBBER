@@ -1,3 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<WonKnobberState version="1" drive="0.86" mix="1.0" variant="ruby" bypass="0"/>
+<WonKnobberState version="1" drive="0.86" mix="1.0" variant="ruby" bypass="0" cabIr="VINTAGE_4X12" neuralModel="VALVE" cabEngage="1" neuralEngage="1"/>
