@@ -71,3 +71,9 @@
 - Readiness: 65/100 (strong on state forms + load path + tests + assets + RT-safe core; main deltas drive/mix XMLs + doc drift + minor rt wiring). If keep state forms as canonical for attrs (update map to reflect), ~85/100. If force display into state, ~30/100 (big churn).
 - Recommendations (from audit): treat bridge + manifest state_ids + current XMLs as de-facto canonical for cabIr/neuralModel attrs (update map.md claims/table); sync XML drive/mix post-QA; fix Trim + add full PDC (sum + conditional); expand embed tests to full cab/neural + all voices; update stale docs/comments.
 - All PREPs now complete (this audit + plan + rear + manual QA) + committed; fanout index + status updated for all 4. Ready for handoff "update IDs + re-embed presets" (use the edit list + maps in the MDs).
+
+**Direct "tell" file created for Claude Code + Claude Design:** `docs/GROK_ACCOMPLISHMENTS_2026-06-03.md` (committed explicitly in 2d85371). Comprehensive summary addressed to each:
+- For CC: full list of subagent preps (with ids, what each produced, edit lists/readiness from ID audit + plan + QA + rear), quick wins (rear embed + public API), records, next steps for you (use the PREPs for your PR stack).
+- For Design: broadcast ingest, unblocked items actioned (flip-spec analyzed, CW sources ready), subagent analysis of your flip-spec.html + anchors (gaps, mapping, order), quick wins that unblock you (embed + API), recs for your next drops (final anchors PNG, CW renders, rear steel-vs-rose + pixel-check for Kali).
+- Includes branch state, explicit-path commits, readiness for handoff execution.
+This + the updated DESIGN_HANDOFF_STATUS.md + the ingested broadcast itself = the full communication to the team. (Mirror at root if needed for quick ref.)
