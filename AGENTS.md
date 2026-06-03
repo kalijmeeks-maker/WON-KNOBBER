@@ -29,7 +29,7 @@ State: `.agent-worktrees/relay-state.json` (watch in tmux MONITOR pane).
 ## Relay format (append ONE block per turn)
 
 ```
-### <YYYY-MM-DD HH:MM> FROM <claude|grok> TO <grok|claude>
+### <YYYY-MM-DD HH:MM> FROM <claude|grok|human|design> TO <claude|grok>
 DID: <files changed>
 HANDOFF: <exact next step for the other agent>
 NEEDS: none
@@ -52,6 +52,17 @@ NEEDS: none
 - `Source/gui/*`, `Resources/` PNGs, `docs/` design handoffs
 - Wire UI to processor via editor callbacks only
 - GUI verify: `wk test render` then `wk pin flip` / `wk drive` (not full Ableton every turn)
+
+### CLAUDE DESIGN — browser only (async; not in `wkteam`)
+
+Claude Design does **not** run in tmux. Deliverables go to git; handoff goes through **`docs/design-inbox/`**:
+
+1. `wk design open` — browser session  
+2. Commit assets (`Resources/`, `docs/…`)  
+3. `wk design new` → edit `docs/design-inbox/HANDOFF.md`  
+4. `wk design push` — appends **`FROM design TO claude|grok`** to `docs/relay.md`  
+
+Code/Grok implement; bring `wk test render` output back for Design pixel-check. See `docs/design-inbox/README.md`.
 
 ## Shared seam (propose in relay before changing)
 
@@ -85,4 +96,4 @@ in a lone line `HANDOFF: done` — never embed that phrase in prose (stops the l
 
 ## Toolkit
 
-`wk playbook` · `wk agent .` · repo `docs/AGENT_TOOLKIT.md`
+`wk playbook` · `wk agent .` · `wk design` · `docs/design-inbox/` · `docs/AGENT_TOOLKIT.md`

@@ -19,6 +19,8 @@ Relay: `wk agent .` from this repo (requires `AGENTS.md` + `docs/relay.md` at re
 
 **Start your day:** `wk day` (or `wk day /path/to/any-relay-repo`) — health, relay tail, worktrees, tmux status, which folder to open in Claude Code.
 
+**Claude Design (browser):** `wk design open` → assets + commit → `wk design new` → edit inbox → `wk design push` → `wkteam`. See `docs/design-inbox/README.md`.
+
 ### Agents: you are not in a chat pane
 
 `wkteam` opens tmux for **monitoring**, not conversation. Your turn is **`docs/relay.md` +

@@ -117,6 +117,9 @@ $RECYCLE.BIN/
 .agent-worktrees/
 Scripts/__pycache__/
 
+# Design inbox draft (template is committed; your HANDOFF.md is local)
+docs/design-inbox/HANDOFF.md
+
 # Neural model checkpoints (uncomment if storing externally)
 # Resources/Models/*.bin
 # Resources/Models/*.onnx
