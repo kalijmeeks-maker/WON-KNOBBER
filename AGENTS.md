@@ -79,7 +79,9 @@ Same repo (`kalijmeeks-maker/WON-KNOBBER`). `git worktree list` on the Mac:
 | `~/Documents/GitHub/wk-grok-assets` | `feat/grok-asset-sync` | **No** |
 
 Edits outside `.agent-worktrees/{claude,grok}` are invisible to the relay until merged into the
-active agent branch. **Newest `TO <agent>`** in `docs/relay.md` sets who runs next.
+active agent branch. **Newest `TO <agent>`** in `docs/relay.md` sets who runs next (`relay-tuner`
+skips Claude when `TO grok`, skips Grok when `TO claude`). End the run with HANDOFF field ending
+in a lone line `HANDOFF: done` — never embed that phrase in prose (stops the loop early).
 
 ## Toolkit
 
