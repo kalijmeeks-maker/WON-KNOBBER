@@ -48,8 +48,10 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
     if (filmstrip.isValid())
     {
         const int frameHeight = filmstrip.getHeight() / numFrames;
+        // Filmstrips are baked frame-0 = max pose (CCW on increase), so invert the lookup to turn
+        // clockwise-on-increase and match the value-arc + CSS knob convention (Design parity call).
         const int frameIndex = juce::jlimit (0, numFrames - 1,
-                                             (int) std::round (sliderPosProportional * (numFrames - 1)));
+                                             (int) std::round ((1.0f - sliderPosProportional) * (numFrames - 1)));
 
         // Square dest centred in the slider bounds (keeps the knob's aspect ratio).
         const auto dest = juce::Rectangle<int> (0, 0, side, side).withCentre (bounds.getCentre());
