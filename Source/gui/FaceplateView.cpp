@@ -233,6 +233,7 @@ void FaceplateView::setBypassed(bool b)
     dbReadout.setBypassed(b);
     knobLnf.setBypassed(b);
     driveKnob.repaint();
+    mixKnob.setBypassed(b);
     repaint();
 }
 
