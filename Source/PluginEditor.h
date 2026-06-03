@@ -8,6 +8,7 @@
 
 #include "PluginProcessor.h"
 #include "gui/FaceplateView.h"
+#include "gui/RearPanelView.h"
 
 class WonKnobberAudioProcessorEditor : public juce::AudioProcessorEditor,
                                        private juce::Timer
@@ -24,6 +25,7 @@ private:
 
     WonKnobberAudioProcessor& processorRef;
     FaceplateView faceplate;
+    RearPanelView rear; // flip-to-rear service panel (cab/neural override); hidden until flipped
     double lastTickSec { 0.0 }; // ballistics dt — first tick falls back to 1/30 s
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WonKnobberAudioProcessorEditor)

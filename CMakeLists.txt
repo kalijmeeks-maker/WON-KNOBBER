@@ -57,6 +57,7 @@ target_sources(WonKnobber PRIVATE ${WK_SOURCES})
 # "choose your stone" picker swaps between them at runtime via KnobLookAndFeel.
 juce_add_binary_data(WonKnobberBinaryData SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x600.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/rear-panel-background-960x600.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Fonts/Orbitron.ttf"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_onyx_256.png"

@@ -234,6 +234,36 @@ void WonKnobberAudioProcessor::revertToLoadedPreset()
     applyStateToParams(s);
 }
 
+void WonKnobberAudioProcessor::setCabIr(const juce::String& cabIrId)
+{
+    currentCabIr = cabIrId;
+    if (cabEngage)
+        convolution.setIr(currentCabIr); // only audible while engaged; selection persists either way
+}
+
+void WonKnobberAudioProcessor::setNeuralModel(const juce::String& modelId)
+{
+    currentNeuralModel = modelId;
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
+}
+
+void WonKnobberAudioProcessor::setCabEngage(bool shouldEngage)
+{
+    cabEngage = shouldEngage;
+    convolution.setEngaged(cabEngage);
+    if (cabEngage)
+        convolution.setIr(currentCabIr); // ensure the current IR is loaded when turning the stage on
+}
+
+void WonKnobberAudioProcessor::setNeuralEngage(bool shouldEngage)
+{
+    neuralEngage = shouldEngage;
+    neuralModel.setEngaged(neuralEngage);
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
+}
+
 namespace
 {
 // The 8 factory voices (Claude Design's drive/mix/gem map). Display name + embedded XML run
@@ -630,6 +660,35 @@ static bool runPresetTransportAPITests()
         std::cout << "PRESET API [all voices load clean]: " << (allClean ? "PASS" : "FAIL") << " n=" << nFac
                   << std::endl;
         if (!allClean)
+            pass = false;
+    }
+
+    // PR4 rear-panel override setters: changing any of the four cab/neural identity fields away from the
+    // loaded voice must light isDirty(); revert clears it. Loading TAPE HEAD (cabIr=STUDIO_RIBBON,
+    // neuralModel=TAPE, both engaged) gives a known clean baseline.
+    {
+        proc.loadFactoryPreset(0); // TAPE HEAD
+        bool cleanBase = !proc.isDirty();
+
+        proc.setCabIr("VINTAGE_4X12"); // diverge cab IR
+        bool dirtyOnCabIr = proc.isDirty();
+        proc.revertToLoadedPreset();
+        bool cleanOnRevert = !proc.isDirty() && proc.getCabIr() == "STUDIO_RIBBON";
+
+        proc.setCabEngage(false); // diverge engage
+        bool dirtyOnEngage = proc.isDirty();
+
+        proc.revertToLoadedPreset();
+        proc.setNeuralModel("VALVE"); // diverge neural model
+        bool dirtyOnNeural = proc.isDirty();
+        proc.revertToLoadedPreset();
+
+        bool overrideOK = cleanBase && dirtyOnCabIr && cleanOnRevert && dirtyOnEngage && dirtyOnNeural;
+        std::cout << "PRESET API [rear override -> dirty]: " << (overrideOK ? "PASS" : "FAIL")
+                  << " base=" << (cleanBase ? 1 : 0) << " cabIr=" << (dirtyOnCabIr ? 1 : 0)
+                  << " revert=" << (cleanOnRevert ? 1 : 0) << " engage=" << (dirtyOnEngage ? 1 : 0)
+                  << " neural=" << (dirtyOnNeural ? 1 : 0) << std::endl;
+        if (!overrideOK)
             pass = false;
     }
 

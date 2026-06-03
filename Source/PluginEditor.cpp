@@ -145,6 +145,54 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
         faceplate.setModified(processorRef.isDirty());
     };
 
+    // Rear service panel (flip-to-rear cab/neural override). Hidden until the flip affordance is clicked.
+    // The rear's IR/model selection drives the processor's cab/neural state directly (the rear-fold
+    // "override"); diverging from the loaded voice lights the front modified-from-preset dot.
+    addChildComponent(rear);
+    rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
+    rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
+    rear.setBypassed(processorRef.getBypassState());
+
+    faceplate.onFlipToRear = [this]
+    {
+        rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
+        rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
+        rear.setBypassed(processorRef.getBypassState());
+        rear.setVisible(true);
+        rear.toFront(false);
+        faceplate.setVisible(false);
+    };
+    rear.onFlipToFront = [this]
+    {
+        faceplate.setVisible(true);
+        rear.setVisible(false);
+    };
+
+    rear.onCabEngageToggled = [this](bool e)
+    {
+        processorRef.setCabEngage(e);
+        rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
+        faceplate.setModified(processorRef.isDirty());
+    };
+    rear.onCabIrChanged = [this](juce::String id)
+    {
+        processorRef.setCabIr(id);
+        rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
+        faceplate.setModified(processorRef.isDirty());
+    };
+    rear.onNeuralEngageToggled = [this](bool e)
+    {
+        processorRef.setNeuralEngage(e);
+        rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
+        faceplate.setModified(processorRef.isDirty());
+    };
+    rear.onNeuralModelChanged = [this](juce::String id)
+    {
+        processorRef.setNeuralModel(id);
+        rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
+        faceplate.setModified(processorRef.isDirty());
+    };
+
     setSize(960, 600);
     startTimerHz(30);
 }
@@ -179,6 +227,11 @@ void WonKnobberAudioProcessorEditor::timerCallback()
     // Reflect bypass (e.g. host state recall while UI open); setBypassed no-ops if unchanged.
     faceplate.setBypassed(processorRef.getBypassState());
 
+    // Keep the rear panel's mirrored cab/neural + bypass state current (no-ops if unchanged; rear may be hidden).
+    rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
+    rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
+    rear.setBypassed(processorRef.getBypassState());
+
     // Reflect active slot (mostly driven by our strip clicks, but keeps indicator correct
     // after any processor-driven change).
     faceplate.setActiveSlot(processorRef.getActiveSlot());
@@ -206,4 +259,5 @@ void WonKnobberAudioProcessorEditor::paint(juce::Graphics& g)
 void WonKnobberAudioProcessorEditor::resized()
 {
     faceplate.setBounds(getLocalBounds());
+    rear.setBounds(getLocalBounds());
 }
