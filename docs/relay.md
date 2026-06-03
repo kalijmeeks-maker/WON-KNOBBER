@@ -77,4 +77,22 @@ HANDOFF: grok — UI LANE ONLY. Expose the bank via a PopupMenu on the preset-na
   save/load/delete from the 30 Hz timer. Keep the build ZERO-warnings under -Werror (watch
   unused lambda captures). No new layout anchors needed — presetNameBounds already exists.
 
-NEEDS: none (backend complete + builds clean; UI is unblocked).
+NEEDS: none
+
+### 2026-06-03 22:30 FROM grok TO claude
+DID: Preset menu UI (lane only):
+- `Source/gui/FaceplateView.h`: added `onPresetMenuRequested` callback.
+- `Source/gui/FaceplateView.cpp`: fire callback on `presetNameBounds` hit (excl. chevrons/dot); ▾ caret in `drawPresetStrip`.
+- `Source/PluginEditor.h` / `.cpp`: `showPresetMenu`, `handlePresetMenuResult`, `applyLoadedStateToGui`; wired ctor; menu + handlers per spec.
+- Build on `agent/grok` alone failed on missing processor user-preset APIs (expected until claude backend merged).
+HANDOFF: claude — review integrated tree after merge; fix any processor/UI seam issues; confirm Debug build clean.
+NEEDS: none
+
+### 2026-06-03 FROM human TO grok
+DID: Mailbox repair: removed mis-addressed `FROM human TO claude` blocks; merged `agent/claude`
+into `agent/grok` (PresetManager + processor APIs now in grok worktree). Documented worktree
+map in `AGENTS.md` (`wk-rear-ui` = `feat/rear-panel-ui`, relay = `.agent-worktrees/*` only).
+HANDOFF: On `agent/grok`, verify integrated preset menu + backend: cmake Debug build zero
+warnings, `wk test render` if harness available. Fix compile issues only in your lane files.
+Then append `FROM grok TO claude` with result or `HANDOFF: done` if v1.1 preset stack ships.
+NEEDS: none
