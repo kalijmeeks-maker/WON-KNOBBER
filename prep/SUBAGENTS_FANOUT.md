@@ -1,9 +1,9 @@
 # Sub-agents fanned out for handoff preparation (Grok session)
 
-Date: Wed Jun  3 02:31:58 PDT 2026
+Date: Wed Jun  3 02:31:58 PDT 2026 (updated post-completion)
 Worktree: /Users/kalimeeks/Documents/GitHub/wk-grok-assets
 Branch: feat/grok-asset-sync
-HEAD: dd46d89
+HEAD: 841ee03 (after all prep commits + SYNC ingest + API + rear embed)
 
 ## Active background sub-agents (use get_command_or_subagent_output with their ids to retrieve reports when ready)
 
@@ -43,3 +43,14 @@ HEAD: dd46d89
 - Next handoff expected to resolve any ID canonicals (short vs TAPE-1971 etc), deliver final rear anchors or flip details, or say "go integrate the assets end-to-end + update presets".
 
 Sub-agents are autonomous; they will use their own tool calls (read, grep, etc.) to explore and write their reports here.
+
+## Completion status (as of latest handoff ingest + prep actions)
+- explore (ID audit): succeeded; PREP_ID_AUDIT.md committed (mismatches table, load path, edit sites for ID sync).
+- plan (this one): succeeded (229s); PREP_INTEGRATION_PLAN.md committed + followed (added public setters as P4 quick-win in 76e8135; status + fanout updated).
+- won-qa: cancelled (doom loop); manual PREP_QA_REPORT.md produced + committed (Trim::no vs yes; missing PDC logic; other passes for RT-safe).
+- general (rear): succeeded; PREP_REAR_UI_READINESS.md committed + followed (added rear PNGs to CMake in 1437df5; public API; status updated).
+- All PREP_*.md + SUBAGENTS_FANOUT.md + SYNC_FROM_DESIGN + DESIGN_HANDOFF_STATUS updates committed explicitly on branch.
+- Quick preps executed: rear bg embed, processor public cab/neural API, status/fanout records.
+- Ready for handoff: when final IDs + rear details land, use the plans/audits to execute (string sync in state/DSP/XMLs/tests, PDC fixes, etc.). See plan §5 for exact questions to ask.
+
+To retrieve any lingering subagent details: get_command_or_subagent_output with the ids above.
