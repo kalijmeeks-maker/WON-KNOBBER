@@ -118,3 +118,38 @@ if(MSVC)
 else()
     target_compile_options(WonKnobber PRIVATE -Wall -Wextra -Werror)
 endif()
+
+# ---- Headless GUI render harness (console app, opt-in) ----
+# Paints FaceplateView + RearPanelView to PNG with controlled state, no host/window/coordinates,
+# for visual-regression testing. Reuses the exact gui/dsp source the plugin builds (minus the plugin
+# wrapper: PluginProcessor/PluginEditor), so renders match the plugin. OFF by default so normal/CI
+# plugin builds aren't slowed; enable with -DWK_BUILD_RENDER_HARNESS=ON. Build target: WonKnobberRender.
+option(WK_BUILD_RENDER_HARNESS "Build the headless GUI render harness (WonKnobberRender)" OFF)
+if(WK_BUILD_RENDER_HARNESS)
+juce_add_console_app(WonKnobberRender PRODUCT_NAME "WonKnobberRender")
+
+file(GLOB_RECURSE WK_HARNESS_SRC CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+list(FILTER WK_HARNESS_SRC EXCLUDE REGEX "/PluginProcessor\\.cpp$")
+list(FILTER WK_HARNESS_SRC EXCLUDE REGEX "/PluginEditor\\.cpp$")
+target_sources(WonKnobberRender PRIVATE ${WK_HARNESS_SRC} "${CMAKE_CURRENT_SOURCE_DIR}/tools/RenderHarness.cpp")
+
+target_include_directories(WonKnobberRender PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+target_compile_definitions(WonKnobberRender PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_STANDALONE_APPLICATION=1
+)
+target_link_libraries(WonKnobberRender
+    PRIVATE
+        WonKnobberBinaryData
+        juce::juce_audio_utils
+        juce::juce_dsp
+        RTNeural
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags
+)
+get_target_property(_rtneural_inc_h RTNeural INTERFACE_INCLUDE_DIRECTORIES)
+if(_rtneural_inc_h)
+    target_include_directories(WonKnobberRender SYSTEM PRIVATE ${_rtneural_inc_h})
+endif()
+endif() # WK_BUILD_RENDER_HARNESS
