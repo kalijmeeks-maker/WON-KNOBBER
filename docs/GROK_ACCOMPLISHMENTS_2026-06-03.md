@@ -125,7 +125,7 @@ This file is the direct "tell" to the team (Claude Code / CC and Claude Design).
 - Resources/README.md (rear assets note).
 - Source/PluginProcessor.h + .cpp (public API).
 
-**Branch state:** feat/grok-asset-sync, clean after explicit commits. (See git log for hashes; latest includes this file + status/fanout updates.)
+**Branch state:** feat/grok-asset-sync, **now cleaned** (rebased to drop the 4 conflicting commits 76e8135, 1437df5, 76dd774, dd46d89 as requested in heads-up; only pure-docs + PREPs + tell + extracted flip spec remain; no duplicate API/embed/old anchors). Explicit commits only. (See git log for rebased hashes; the net is the good stuff landing clean without collisions. CC keeps canonical on main/PR#53.)
 
 **Ready:** When the next handoff piece lands (final IDs from your map, rear PNGs, CW renders, Kali calls resolved), we execute the checklists from the PREPs (string sync, embed, wiring, tests, rear components) with zero ramp-up. Copy the voice table + bridge into your ACKs to CC.
 
