@@ -59,6 +59,7 @@ juce_add_binary_data(WonKnobberBinaryData SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x600.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/rear-panel-background-960x600.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Fonts/Orbitron.ttf"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Fonts/Hultog_Engraved.ttf"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_onyx_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_sapphire_256.png"

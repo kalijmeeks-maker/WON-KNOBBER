@@ -149,24 +149,13 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
     // The rear's IR/model selection drives the processor's cab/neural state directly (the rear-fold
     // "override"); diverging from the loaded voice lights the front modified-from-preset dot.
     addChildComponent(rear);
+    addChildComponent(flipAnim);
     rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
     rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
     rear.setBypassed(processorRef.getBypassState());
 
-    faceplate.onFlipToRear = [this]
-    {
-        rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
-        rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
-        rear.setBypassed(processorRef.getBypassState());
-        rear.setVisible(true);
-        rear.toFront(false);
-        faceplate.setVisible(false);
-    };
-    rear.onFlipToFront = [this]
-    {
-        faceplate.setVisible(true);
-        rear.setVisible(false);
-    };
+    faceplate.onFlipToRear = [this] { startFlip(true); };
+    rear.onFlipToFront = [this] { startFlip(false); };
 
     rear.onCabEngageToggled = [this](bool e)
     {
@@ -256,8 +245,43 @@ void WonKnobberAudioProcessorEditor::paint(juce::Graphics& g)
     g.fillAll(juce::Colour(0xff1b1b1e));
 }
 
+void WonKnobberAudioProcessorEditor::startFlip(bool toRear)
+{
+    if (flipAnim.isAnimating())
+        return;
+
+    // Sync the incoming side's mirrored state before we snapshot it.
+    if (toRear)
+    {
+        rear.setCabState(processorRef.getCabIr(), processorRef.getCabEngage());
+        rear.setNeuralState(processorRef.getNeuralModel(), processorRef.getNeuralEngage());
+        rear.setBypassed(processorRef.getBypassState());
+    }
+
+    auto& outgoing = toRear ? static_cast<juce::Component&>(faceplate) : static_cast<juce::Component&>(rear);
+    auto& incoming = toRear ? static_cast<juce::Component&>(rear) : static_cast<juce::Component&>(faceplate);
+
+    // Snapshot both sides (createComponentSnapshot renders even while hidden, since both are laid out).
+    const auto outSnap = outgoing.createComponentSnapshot(outgoing.getLocalBounds());
+    const auto inSnap = incoming.createComponentSnapshot(incoming.getLocalBounds());
+
+    faceplate.setVisible(false);
+    rear.setVisible(false);
+
+    flipAnim.start(outSnap, inSnap,
+                   [this, toRear]
+                   {
+                       if (toRear)
+                           rear.setVisible(true);
+                       else
+                           faceplate.setVisible(true);
+                       flipAnim.setVisible(false);
+                   });
+}
+
 void WonKnobberAudioProcessorEditor::resized()
 {
     faceplate.setBounds(getLocalBounds());
     rear.setBounds(getLocalBounds());
+    flipAnim.setBounds(getLocalBounds());
 }

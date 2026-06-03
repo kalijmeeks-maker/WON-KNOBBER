@@ -6,6 +6,18 @@
 
 #include "BinaryData.h"
 
+namespace
+{
+// Hultog Engraved — the rear well/readout face (matches the front dB readout + preset strip).
+// Typeface is built once (static) from BinaryData; the Font wraps it at the requested height each call.
+juce::Font hultogFont(float height)
+{
+    static const juce::Typeface::Ptr tf =
+        juce::Typeface::createSystemTypefaceFor(BinaryData::Hultog_Engraved_ttf, BinaryData::Hultog_Engraved_ttfSize);
+    return juce::Font(juce::FontOptions(tf)).withHeight(height);
+}
+} // namespace
+
 RearPanelView::RearPanelView()
 {
     rearPlate = juce::ImageCache::getFromMemory(BinaryData::rearpanelbackground960x600_png,
@@ -161,9 +173,9 @@ void RearPanelView::drawWell(juce::Graphics& g, juce::Rectangle<int> well, juce:
     const juce::Colour amber = bypassed ? juce::Colour(0xffa8632a) : juce::Colour(0xffeaa24c);
     const juce::Colour chevCol = bypassed ? juce::Colour(0xff5a4a38) : juce::Colour(0xff9aa0a3);
 
-    // Selection name centred between the chevrons.
+    // Selection name centred between the chevrons (Hultog Engraved — matches the front readout/strip).
     g.setColour(amber);
-    g.setFont(juce::Font(juce::FontOptions((float)juce::jmin(20, well.getHeight() - 22)).withStyle("Bold")));
+    g.setFont(hultogFont((float)juce::jmin(23, well.getHeight() - 16)));
     auto textArea = well.withTrimmedLeft(prev.getWidth()).withTrimmedRight(next.getWidth());
     g.drawText(display, textArea, juce::Justification::centred, false);
 
