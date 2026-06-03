@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>WON KNOBBER — Rear Service Panel (960×600)</title>
+<style>
+@font-face { font-family:"Hultog Engraved"; src:url("../fonts/Hultog_Engraved.ttf") format("truetype"); font-display:swap; }
+@font-face { font-family:"CF Engraved";     src:url("../fonts/CF_Engraved.ttf")     format("truetype"); font-display:swap; }
+@font-face { font-family:"Orbitron";         src:url("../fonts/Orbitron.ttf")        format("truetype"); font-weight:400 900; font-display:swap; }
+
+:root{
+  --amber:#ff8800; --amber-hi:#ffb43c; --amber-deep:#b25c00;
+  --bone:rgba(238,232,220,.46);
+  --font-eng:"Hultog Engraved","CF Engraved",serif;
+  --font-led:"Orbitron",monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{background:#000;}
+
+/* ===================== CHASSIS (matches front .mk-chassis-rg) ===================== */
+.chassis{
+  position:relative; width:960px; height:600px; border-radius:14px;
+  border:1px solid #050505; padding:10px 14px; overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 55%),
+    url("../assets/textures/rose-gold-polished.png") center/cover;
+  box-shadow:
+    0 24px 60px rgba(0,0,0,0.85), 0 6px 14px rgba(0,0,0,0.6),
+    inset 0 1px 1px rgba(255,255,255,0.10), inset 0 -2px 6px rgba(0,0,0,0.6);
+}
+/* rose-gold corner screws (match front .pro-stage .mk-screw) */
+.screw{position:absolute; width:18px; height:18px; border-radius:50%; z-index:5;
+  background:radial-gradient(circle at 36% 28%, #ffe3d8 0%, #e6a78c 26%, #b06b4e 68%, #4a2418 100%);
+  box-shadow:inset 0 1px 1px rgba(255,232,222,0.6), inset 0 -1.5px 2px rgba(60,28,18,0.85), 0 1px 2px rgba(0,0,0,0.8);}
+.screw::after{content:""; position:absolute; left:3px; right:3px; top:50%; height:2px; transform:translateY(-50%);
+  background:#2a140c; box-shadow:0 1px 0 rgba(255,224,210,0.3); border-radius:1px;}
+.screw.tl{top:11px;left:11px;} .screw.tr{top:11px;right:11px;}
+.screw.bl{bottom:11px;left:11px;} .screw.br{bottom:11px;right:11px;}
+
+/* ===================== PANEL (matches front .mk2-panel + .pro-panel) ===================== */
+.panel{
+  position:relative; width:100%; height:100%; border-radius:12px; overflow:hidden;
+  padding:20px 22px 16px;
+  display:flex; flex-direction:column;
+  background:
+    radial-gradient(ellipse at 50% 28%, #1d1d1a 0%, #0b0b0a 54%, #030303 100%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.010) 0px, rgba(255,255,255,0.010) 1px, rgba(0,0,0,0.05) 1px, rgba(0,0,0,0.05) 2px);
+  box-shadow:
+    inset 0 22px 40px -28px rgba(255,255,255,0.10),
+    inset 0 -60px 80px -60px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(0,0,0,0.85), 0 0 0 2px rgba(255,255,255,0.10),
+    inset 0 1px 0 rgba(255,255,255,0.06), inset 0 2px 10px rgba(0,0,0,0.7), inset 0 -2px 6px rgba(0,0,0,0.5);
+}
+.panel::after{content:""; position:absolute; inset:0; border-radius:12px; pointer-events:none;
+  box-shadow:inset 0 0 24px rgba(210,160,60,0.06);}
+.sheen{position:absolute; inset:0; pointer-events:none; z-index:6;
+  background:linear-gradient(115deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.05) 48%, rgba(255,255,255,0.09) 50%, rgba(255,255,255,0.05) 52%, rgba(255,255,255,0) 60%);
+  mix-blend-mode:screen;}
+
+/* ===================== ENGRAVED TEXT ===================== */
+.eng{font-family:var(--font-eng); text-transform:uppercase; color:var(--bone);
+  text-shadow:0 1px 0 rgba(255,255,255,.05), 0 -1px 1px rgba(0,0,0,.7); white-space:nowrap;}
+.eng.md{font-size:16px; letter-spacing:.30em;}
+.eng.sm{font-size:11px; letter-spacing:.26em;}
+.eng.xs{font-size:9.5px; letter-spacing:.24em;}
+.amber-eng{font-family:var(--font-eng); color:var(--amber); letter-spacing:.10em;
+  text-shadow:0 0 8px rgba(255,140,0,.55);}
+
+/* ===================== HEADER (brand · spec · stamp) ===================== */
+.head{display:flex; align-items:center; justify-content:space-between; gap:20px; padding:0 2px 12px; flex:none;}
+.brand-svg{display:block; height:46px; width:300px;}
+.brand-tag{font-family:var(--font-eng); font-size:9px; letter-spacing:.50em; color:#737373;
+  text-transform:uppercase; margin-left:6px; margin-top:3px;}
+.spec-inset{display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:7px 16px 8px; border-radius:9px;
+  background:linear-gradient(180deg, rgba(0,0,0,0.36), rgba(0,0,0,0.16));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05), inset 0 0 0 1px rgba(0,0,0,0.55), inset 0 2px 6px rgba(0,0,0,0.45);}
+.spec-inset .v{font-family:var(--font-led); font-size:12px; letter-spacing:.06em; color:var(--amber);
+  text-shadow:0 0 7px rgba(255,140,0,.5);}
+.head-stamp{display:flex; flex-direction:column; align-items:flex-end; gap:5px;}
+
+/* gold hairline (matches front .mk2-rule) */
+.rule{height:1px; width:100%; flex:none;
+  background:linear-gradient(90deg, rgba(212,170,80,0) 0%, rgba(212,170,80,0.45) 18%, rgba(244,210,120,0.65) 50%, rgba(212,170,80,0.45) 82%, rgba(212,170,80,0) 100%);
+  box-shadow:0 1px 0 rgba(0,0,0,0.6);}
+
+/* ===================== BODY (3 zones, matches front .pro-body) ===================== */
+.body{display:grid; grid-template-columns:1fr auto 1fr; align-items:stretch; gap:24px; padding:14px 4px 14px; flex:1;}
+
+/* recessed module (matches front .pro-module) */
+.module{display:flex; flex-direction:column; gap:14px; padding:16px 18px;
+  border-radius:11px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.03), rgba(255,255,255,0) 60%),
+    linear-gradient(180deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.18) 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.05), inset 0 0 0 1px rgba(0,0,0,0.6), inset 0 2px 8px rgba(0,0,0,0.5);}
+.module-hd{display:flex; align-items:center; gap:10px; align-self:stretch; justify-content:center;}
+.module-hd::before,.module-hd::after{content:""; flex:1; height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);}
+
+/* engage row */
+.engage{display:flex; align-items:center; gap:12px;}
+.rocker{width:64px; height:30px; border-radius:7px; position:relative; flex:none;
+  background:linear-gradient(180deg,#2a1d05,#150e02);
+  box-shadow:inset 0 2px 4px rgba(0,0,0,.8), inset 0 -1px 1px rgba(255,255,255,.05), inset 0 0 0 1px rgba(0,0,0,.6);}
+.rocker .cap{position:absolute; top:3px; left:33px; width:28px; height:24px; border-radius:5px;
+  background:linear-gradient(180deg,#6a5012,#33260a); box-shadow:0 2px 4px rgba(0,0,0,.7), inset 0 1px 1px rgba(255,200,90,.35);}
+.rocker.off{background:linear-gradient(180deg,#1d1b18,#0a0908);}
+.rocker.off .cap{left:3px; background:linear-gradient(180deg,#3a352d,#1c1a16); box-shadow:0 2px 4px rgba(0,0,0,.7), inset 0 1px 1px rgba(255,255,255,.12);}
+/* jewel LED (matches front .pro-stage .mk-led-amber) */
+.led{width:12px; height:12px; border-radius:50%; flex:none; position:relative;
+  background:radial-gradient(circle at 50% 32%, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 30%), radial-gradient(circle at 50% 60%, #ffb43c 0%, #b25c00 70%, #0a0a0a 100%);
+  box-shadow:inset 0 -1px 2px rgba(80,30,0,0.6), inset 0 1px 1px rgba(255,240,200,0.55), 0 0 9px 1px rgba(255,150,30,0.75);}
+.led.dark{background:radial-gradient(circle at 50% 60%, #3a3a3e 0%, #1a1a1d 70%, #0a0a0a 100%);
+  box-shadow:inset 0 -1px 2px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.10);}
+.engage .st{display:flex; flex-direction:column; gap:3px;}
+.engage .st .t{font-family:var(--font-led); font-size:11px; letter-spacing:.08em; color:var(--amber); text-shadow:0 0 6px rgba(255,140,0,.5);}
+
+/* recessed screen well (matches front .pro-screen) — holds the select readout */
+.screen{border-radius:8px; padding:13px 14px; position:relative; overflow:hidden;
+  background:linear-gradient(180deg, #060608 0%, #030304 100%);
+  box-shadow:inset 0 2px 10px rgba(0,0,0,0.95), inset 0 -1px 1px rgba(255,255,255,0.04), inset 0 0 0 1px rgba(0,0,0,0.8);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.screen::after{content:""; position:absolute; left:0; right:0; top:0; height:38%;
+  background:linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0)); pointer-events:none;}
+.screen .cur{font-family:var(--font-eng); font-size:17px; letter-spacing:.12em; color:var(--amber);
+  text-shadow:0 0 8px rgba(255,140,0,.5); position:relative; z-index:1;}
+.screen .chev{display:flex; gap:9px; position:relative; z-index:1;}
+.screen .chev span{font-family:sans-serif; font-size:13px; color:#6a6a70;}
+.opts{display:flex; flex-direction:column; gap:3px; padding-left:2px;}
+.opts .o{font-family:var(--font-eng); font-size:10.5px; letter-spacing:.10em; text-transform:uppercase; color:#5a5a60;}
+.opts .o.on{color:var(--amber-hi); text-shadow:0 0 6px rgba(255,150,30,.4);}
+.col{display:flex; flex-direction:column; gap:9px;}
+
+/* ===================== CENTER HERO (flip-to-front medallion) ===================== */
+.hero{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; padding:0 6px;}
+.hero-well{position:relative; width:188px; height:188px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255,238,200,0.10) 0%, rgba(255,238,200,0) 48%),
+    radial-gradient(circle at 50% 50%, #141416 0%, #0c0c0e 58%, #060608 100%);
+  box-shadow:inset 0 3px 12px rgba(0,0,0,0.85), inset 0 -2px 6px rgba(255,255,255,0.04), inset 0 0 0 1px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.05), 0 0 44px rgba(210,160,60,0.06);}
+/* rose-gold flip medallion */
+.medallion{position:relative; width:128px; height:128px; border-radius:50%; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  background:
+    repeating-conic-gradient(from 0deg, rgba(255,255,255,0.05) 0deg 2deg, rgba(0,0,0,0.06) 2deg 4deg),
+    radial-gradient(circle at 50% 32%, #ffe3d8 0%, #e6a78c 30%, #b06b4e 70%, #6a3a24 100%);
+  box-shadow:inset 0 2px 3px rgba(255,232,222,0.55), inset 0 -4px 8px rgba(60,28,18,0.7), 0 0 0 2px rgba(40,26,16,0.55), 0 6px 16px rgba(0,0,0,0.6);}
+.medallion .ico{font-family:sans-serif; font-size:34px; line-height:1; color:#3a2014; text-shadow:0 1px 0 rgba(255,224,210,0.4);}
+.medallion .flip{font-family:var(--font-eng); font-size:9.5px; letter-spacing:.22em; color:#3a2014; text-transform:uppercase;}
+.hero-readout{display:flex; align-items:baseline; gap:7px; padding:6px 16px; border-radius:8px;
+  background:linear-gradient(180deg, #050507 0%, #020203 100%);
+  box-shadow:inset 0 2px 7px rgba(0,0,0,0.9), inset 0 -1px 1px rgba(255,255,255,0.03);}
+.hero-readout .v{font-family:var(--font-eng); font-size:15px; letter-spacing:.10em; color:var(--amber);
+  text-shadow:0 0 12px rgba(255,140,0,.7);}
+.hero-scale{display:flex; justify-content:space-between; width:206px; padding:0 2px;}
+
+/* ===================== FOOTER (matches front .pro-foot) ===================== */
+.foot{display:flex; align-items:center; gap:16px; padding:12px 4px 2px; flex:none;}
+.foot .os-cell{display:flex; flex-direction:column; gap:6px; align-items:flex-start;}
+.os-seg{display:flex; border-radius:7px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(0,0,0,.7), inset 0 2px 5px rgba(0,0,0,.7);}
+.os-seg span{font-family:var(--font-eng); font-size:11px; letter-spacing:.10em; padding:7px 12px; color:#6a6a70; background:#0a0908;}
+.os-seg span.on{color:#1a1308; background:linear-gradient(180deg,#ffb43c,#b25c00); text-shadow:none;}
+.foot-strip{flex:1; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border-radius:8px; padding:11px 16px;
+  background:linear-gradient(180deg, #060608 0%, #030304 100%);
+  box-shadow:inset 0 2px 9px rgba(0,0,0,0.92), inset 0 -1px 1px rgba(255,255,255,0.03), inset 0 0 0 1px rgba(0,0,0,0.7);}
+.foot-strip .k{font-family:var(--font-eng); font-size:11px; letter-spacing:.20em; color:var(--bone); text-transform:uppercase;}
+.foot-strip .v{font-family:var(--font-eng); font-size:14px; letter-spacing:.10em; color:var(--amber); text-shadow:0 0 8px rgba(255,140,0,.5);}
+.foot-btns{display:flex; gap:9px;}
+.fbtn{width:42px; height:42px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-eng); font-size:9px; letter-spacing:.06em; color:#8a8a90; text-align:center; line-height:1.1;
+  background:radial-gradient(ellipse at 50% 0%, rgba(255,255,255,0.04), rgba(255,255,255,0) 60%), linear-gradient(180deg, #1a1a1c, #0c0c0e);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 0 1px rgba(0,0,0,0.7), 0 1px 2px rgba(0,0,0,0.6);}
+</style>
+</head>
+<body>
+<div class="chassis" id="chassis">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="panel">
+    <div class="sheen"></div>
+
+    <!-- ===== HEADER ===== -->
+    <div class="head">
+      <div style="display:flex; flex-direction:column;">
+        <svg class="brand-svg" viewBox="0 0 720 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="wonG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6a4a08"/><stop offset="25%" stop-color="#a37718"/>
+              <stop offset="50%" stop-color="#f4cb52"/><stop offset="75%" stop-color="#a37718"/><stop offset="100%" stop-color="#6a4a08"/>
+            </linearGradient>
+            <linearGradient id="knobG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8c8c93"/><stop offset="50%" stop-color="#ececf2"/><stop offset="100%" stop-color="#9a9aa2"/>
+            </linearGradient>
+            <filter id="engF" x="-10%" y="-30%" width="120%" height="160%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="0.5" result="b"/>
+              <feOffset in="b" dx="0" dy="1" result="o1"/>
+              <feComponentTransfer in="o1" result="o1a"><feFuncA type="linear" slope="0.55"/></feComponentTransfer>
+              <feMerge><feMergeNode in="o1a"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <text x="360" y="60" text-anchor="middle" font-family="'Hultog Engraved','CF Engraved',serif" font-size="58" letter-spacing="4" filter="url(#engF)">
+            <tspan fill="url(#wonG)">WON</tspan><tspan dx="18" fill="url(#knobG)">KNOBBER</tspan>
+          </text>
+        </svg>
+        <span class="brand-tag">REAR · SERVICE PANEL</span>
+      </div>
+      <div class="spec-inset">
+        <span class="v">JUCE 8.0.13 · v1.0.0</span>
+        <span class="eng xs">FIRMWARE · BUILD</span>
+      </div>
+      <div class="head-stamp">
+        <span class="eng sm">SERIAL</span>
+        <span class="amber-eng" style="font-size:13px; letter-spacing:.18em;">WK—0001</span>
+      </div>
+    </div>
+    <div class="rule"></div>
+
+    <!-- ===== BODY ===== -->
+    <div class="body">
+      <!-- LEFT — CABINET -->
+      <div class="module">
+        <div class="module-hd"><span class="eng md">CABINET</span></div>
+        <div class="engage">
+          <span class="rocker"><span class="cap"></span></span>
+          <span class="led"></span>
+          <span class="st"><span class="eng xs">ENGAGE</span><span class="t">ON</span></span>
+        </div>
+        <div class="col">
+          <span class="eng xs">IMPULSE RESPONSE · CONVOLUTION</span>
+          <div class="screen">
+            <span class="cur">VINTAGE 4×12</span>
+            <span class="chev"><span>◂</span><span>▸</span></span>
+          </div>
+          <div class="opts">
+            <span class="o">FLAT</span>
+            <span class="o">STUDIO RIBBON</span>
+            <span class="o on">VINTAGE 4×12</span>
+            <span class="o">CONSOLE BOX</span>
+            <span class="o">OLD RADIO</span>
+            <span class="o">IRON CORE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER — FLIP MEDALLION -->
+      <div class="hero">
+        <span class="eng md">FLIP TO FRONT</span>
+        <div class="hero-well">
+          <div class="medallion">
+            <span class="ico">↻</span>
+            <span class="flip">FLIP</span>
+          </div>
+        </div>
+        <div class="hero-readout"><span class="v">SAT → CAB → NEURAL</span></div>
+        <div class="hero-scale">
+          <span class="eng xs">FRONT</span>
+          <span class="eng xs">SERVICE</span>
+          <span class="eng xs">REAR</span>
+        </div>
+      </div>
+
+      <!-- RIGHT — NEURAL -->
+      <div class="module">
+        <div class="module-hd"><span class="eng md">NEURAL</span></div>
+        <div class="engage">
+          <span class="rocker"><span class="cap"></span></span>
+          <span class="led"></span>
+          <span class="st"><span class="eng xs">ENGAGE</span><span class="t">ON</span></span>
+        </div>
+        <div class="col">
+          <span class="eng xs">MODEL · RTNEURAL</span>
+          <div class="screen">
+            <span class="cur">TAPE — 1971</span>
+            <span class="chev"><span>◂</span><span>▸</span></span>
+          </div>
+          <div class="opts">
+            <span class="o">NONE</span>
+            <span class="o on">TAPE — 1971</span>
+            <span class="o">VALVE — CLASS A</span>
+            <span class="o">TRANSISTOR — FET</span>
+            <span class="o">IRON — TRANSFORMER</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+    <!-- ===== FOOTER ===== -->
+    <div class="foot">
+      <div class="os-cell">
+        <span class="eng xs">OVERSAMPLING</span>
+        <div class="os-seg"><span>OFF</span><span class="on">×2</span><span>×4</span><span>×8</span></div>
+      </div>
+      <div class="foot-strip">
+        <span class="k">I/O Trim</span>
+        <span class="v">−0.0 dB</span>
+        <span class="chev" style="display:flex; gap:9px;"><span style="font-family:sans-serif; color:#6a6a70;">◂</span><span style="font-family:sans-serif; color:#6a6a70;">▸</span></span>
+      </div>
+      <div class="foot-btns">
+        <span class="fbtn">ABOUT</span>
+        <span class="fbtn">MANUAL</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

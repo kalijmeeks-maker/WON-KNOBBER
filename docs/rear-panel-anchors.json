@@ -1,0 +1,34 @@
+{
+  "_space": "960x600 px, [x,y,w,h] from chassis top-left. Multiply by 2 for the @2x asset.",
+  "_bg_asset": "rear-panel-background-960x600.png (@2x: rear-panel-background-2x-1920x1200.png)",
+  "_note": "Rear panel reworked to match the FRONT faceplate language (rose-gold mk-chassis-rg frame, warm near-black mk2-panel field, pro-module recesses, mk2-rule amber hairlines, jewel LEDs). Layout mirrors the front: header (brand / spec inset / serial stamp) -> rule -> 3-zone body (CABINET / flip medallion / NEURAL) -> rule -> footer (oversampling / I/O trim strip / buttons). The baked PNG is a representative comp (shows VINTAGE 4x12 + TAPE-1971 + engaged). CC paints the live layers below; static labels/recesses are already baked.",
+  "chassis": [0, 0, 960, 600],
+
+  "spec_inset": [506, 39, 181, 46],
+  "_spec_inset_note": "Static. Firmware/build readout (Orbitron amber).",
+
+  "cabinet_module": [41, 119, 299, 380],
+  "cab_engage_rocker": [59, 168, 64, 30],
+  "_cab_engage_rocker_note": "Live. OFF=cap left/cool, ON=cap right/amber.",
+  "cab_engage_led": [134, 177, 12, 12],
+  "cab_ir_well": [59, 232, 263, 48],
+  "_cab_ir_well_note": "Live. Paint current IR name (Hultog Engraved amber ~17px) + chevron stepper at right. Options list painted below it: FLAT / STUDIO RIBBON / VINTAGE 4x12 / CONSOLE BOX / OLD RADIO / IRON CORE (active = bright amber).",
+
+  "neural_module": [620, 119, 299, 380],
+  "neural_engage_rocker": [638, 168, 64, 30],
+  "neural_engage_led": [713, 177, 12, 12],
+  "neural_model_well": [638, 232, 263, 47],
+  "_neural_model_well_note": "Live. Options: NONE / TAPE-1971 / VALVE-CLASS A / TRANSISTOR-FET / IRON-TRANSFORMER.",
+
+  "flip_hero_well": [386, 198, 188, 188],
+  "flip_medallion": [416, 228, 128, 128],
+  "_flip_medallion_note": "Live hit-target. Click rotates chassis 180deg back to front (~450ms cubic-bezier(.2,.8,.2,1)). Static rose-gold disc is baked; only the click + rotation are wired.",
+
+  "oversampling_seg": [41, 543, 160, 28],
+  "_oversampling_seg_note": "Live segmented OFF / x2 / x4 / x8 (amber fill on active).",
+  "io_trim_strip": [217, 528, 593, 41],
+  "_io_trim_strip_note": "Live. Paint I/O trim value (amber) + chevron stepper.",
+  "about_btn": [827, 528, 42, 42],
+  "_about_btn_note": "Live hit-target. Opens About/MIT modal.",
+  "manual_btn": [877, 528, 42, 42]
+}
