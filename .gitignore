@@ -113,6 +113,10 @@ $RECYCLE.BIN/
 *.bak
 *~
 
+# Autonomous agent relay (local orchestrator — not committed)
+.agent-worktrees/
+Scripts/__pycache__/
+
 # Neural model checkpoints (uncomment if storing externally)
 # Resources/Models/*.bin
 # Resources/Models/*.onnx
