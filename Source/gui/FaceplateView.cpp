@@ -479,8 +479,8 @@ void FaceplateView::drawAboutButton(juce::Graphics& g)
 
 juce::Rectangle<int> FaceplateView::computeAboutPanelBounds() const
 {
-    const int w = juce::jmin(520, getWidth() - 80);
-    const int h = juce::jmin(300, getHeight() - 120);
+    const int w = juce::jmin(580, getWidth() - 60); // ~60% of the 960 face, per Design §3
+    const int h = juce::jmin(360, getHeight() - 90);
     return juce::Rectangle<int>(0, 0, juce::jmax(120, w), juce::jmax(120, h)).withCentre(getLocalBounds().getCentre());
 }
 
@@ -520,19 +520,34 @@ void FaceplateView::drawAboutPanel(juce::Graphics& g)
     g.setFont(juce::Font(juce::FontOptions(13.0f)));
     g.drawText("Photoreal one-knob saturation", line.removeFromTop(22), juce::Justification::topLeft, false);
 
-    // Attribution body — surfaces the Airwindows MIT notice in-app (THIRD_PARTY_LICENSES.md ship req).
-    const juce::String copy = juce::String(juce::CharPointer_UTF8("\xc2\xa9"));     // ©
-    const juce::String dash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94")); // —
-    juce::String body;
-    body << copy << " 2026 Kali Meeks\n"
-         << "WON-KNOBBER is licensed under PolyForm Noncommercial 1.0.0\n\n"
-         << "Saturation algorithms derived from Airwindows\n"
-         << copy << " 2018 Chris Johnson  " << dash << "  MIT License\n\n"
-         << "Full third-party notices: THIRD_PARTY_LICENSES.md\n"
-         << "Built with JUCE.";
+    // Credit block — verbatim per Design §3 (legally precise; hardcoded, NOT paraphrased).
+    // Two-license picture: the plugin is PolyForm-NC, the Airwindows core is MIT — both appear.
+    const juce::String copy = juce::String(juce::CharPointer_UTF8("\xc2\xa9"));      // ©
+    const juce::String dash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94"));  // —
+    const juce::String mid = juce::String(juce::CharPointer_UTF8("\xc2\xb7"));       // ·
+    const juce::String tm = juce::String(juce::CharPointer_UTF8("\xe2\x84\xa2"));    // ™
+    const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x96\xb8")); // ▸
 
+    juce::String credit;
+    credit << "Saturation core derived from Airwindows " << dash << " " << copy
+           << " 2018 Chris Johnson, used under the MIT licence.\n"
+           << "Cabinet impulse responses under their respective licences (see notices). Neural models " << copy
+           << " Kali Meeks.\n"
+           << "WON KNOBBER " << copy << " 2026 Kali Meeks " << mid
+           << " PolyForm Noncommercial 1.0.0. Built with JUCE 8. VST3" << tm << " Steinberg Media Technologies.";
+
+    // Hairline rule above the credit block (per §3 layout).
+    line.removeFromTop(8);
+    g.setColour(juce::Colour(0xff3a3d3e));
+    g.drawLine((float)line.getX(), (float)line.getY(), (float)line.getRight(), (float)line.getY(), 1.0f);
     line.removeFromTop(10);
+
     g.setColour(juce::Colour(0xffc9c6be));
-    g.setFont(juce::Font(juce::FontOptions(12.5f)));
-    g.drawMultiLineText(body, line.getX(), line.getY() + 14, line.getWidth(), juce::Justification::topLeft);
+    g.setFont(juce::Font(juce::FontOptions(12.0f)));
+    g.drawMultiLineText(credit, line.getX(), line.getY() + 12, line.getWidth(), juce::Justification::topLeft);
+
+    // Single amber "View full licences" link → the full THIRD_PARTY_LICENSES.md scroll (scroll UI is future work).
+    g.setColour(juce::Colour(0xffffb74d));
+    g.setFont(juce::Font(juce::FontOptions(12.0f).withStyle("Bold")));
+    g.drawText("View full licences " + arrow, line.removeFromBottom(20), juce::Justification::bottomLeft, false);
 }
