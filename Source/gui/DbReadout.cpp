@@ -54,6 +54,15 @@ void DbReadout::paint (juce::Graphics& g)
     // Outer glow halo — same amber but soft, drawn as a few stacked semitransparent
     // passes at slight offsets. Cheap and gives the LED-in-a-well bloom.
     g.setFont (ledFont);
+
+    if (bypassed)
+    {
+        // §3.4 db_readout: dull ember, no glow — still legible, de-energized.
+        g.setColour (juce::Colour (0xffa8632a).withAlpha (0.30f));
+        g.drawText (text, bounds, juce::Justification::centred, false);
+        return;
+    }
+
     const auto haloColour = juce::Colour (0xffff8800);
     for (float offset : { 3.0f, 2.0f, 1.0f })
     {

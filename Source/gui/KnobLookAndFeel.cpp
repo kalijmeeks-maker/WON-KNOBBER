@@ -61,10 +61,11 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
     }
     else
     {
-        // Placeholder until the filmstrip asset is wired in.
+        // Plain rotary (no filmstrip — e.g. the DRY/WET mix knob). §3.4: its amber edge
+        // de-energizes to cold metal grey on bypass so it doesn't read as "lit".
         g.setColour (juce::Colour (0xff2a2d2e));
         g.fillEllipse (bounds.toFloat());
-        g.setColour (juce::Colour (0xffffb14e));
+        g.setColour (bypassed ? juce::Colour (0xff6a6e74) : juce::Colour (0xffffb14e));
         g.drawEllipse (bounds.toFloat().reduced (2.0f), 2.0f);
     }
 
@@ -76,6 +77,7 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
     arc.addCentredArc   (centre.x, centre.y, r, r, 0.0f, rotaryStartAngle, toAngle, true);
     g.setColour (juce::Colours::black.withAlpha (0.35f));
     g.strokePath (track, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    g.setColour (juce::Colour (0xffFE9A00));
+    g.setColour (bypassed ? juce::Colour (0xff6e6256).withAlpha (0.15f)  // §3.4 value_arc: dull grey-amber
+                          : juce::Colour (0xffFE9A00));
     g.strokePath (arc, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }

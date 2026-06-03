@@ -102,6 +102,18 @@ void WonKnobberAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
     if (numCh >= 2)
         atomicMaxMerge(peakInR, buffer.getMagnitude(1, 0, numSmps));
 
+    // True bypass: leave the buffer as-is (dry passthrough), skip the entire wet chain
+    // + dry/wet mix. OUT meter mirrors IN so the dim-state UI reads "inactive". Consistent
+    // with the existing dry-path convention (no extra latency compensation here).
+    if (bypassState.load(std::memory_order_relaxed))
+    {
+        if (numCh >= 1)
+            atomicMaxMerge(peakOutL, buffer.getMagnitude(0, 0, numSmps));
+        if (numCh >= 2)
+            atomicMaxMerge(peakOutR, buffer.getMagnitude(1, 0, numSmps));
+        return;
+    }
+
     saturation.setDrive(drive->get());
 
     // Update mix target each block (from param); smoothing happens inside applyCrossfade.

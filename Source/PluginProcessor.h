@@ -99,15 +99,14 @@ private:
     juce::String currentVariant{"diamond"};    // persisted in plugin state
     juce::AudioParameterFloat* mix{nullptr};   // 0.0 - 1.0, default 1.0 (full wet for backwards compat)
 
-    bool bypassState{false}; // future rocker; persisted; default false (chain not bypassed)
+    std::atomic<bool> bypassState{false}; // bypass rocker; persisted; read on audio thread (true bypass = dry passthrough)
 
     // Cab + neural slot selection (persisted UI state, like variant; NOT automatable params).
-    // Defaults OFF so legacy sessions keep identical audio. DSP/UI wiring lands in later PRs.
+    // Defaults OFF so legacy sessions keep identical audio.
     juce::String currentCabIr{"FLAT"};
     juce::String currentNeuralModel{"NONE"};
     bool cabEngage{false};
     bool neuralEngage{false};
-
     WonKnobberState slotA;   // A/B slots for future transport; initialised to current; round-tripped via host state
     WonKnobberState slotB;
     char activeSlot{'A'}; // current compare slot; 'A' or 'B'; transient (not in state blob)

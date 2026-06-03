@@ -28,10 +28,14 @@ public:
 
     void setDrive (float newDrive) noexcept;
 
+    // Bypass dim-state (§3.4): dim to a dull ember, no glow (still legible).
+    void setBypassed (bool b) noexcept { bypassed = b; repaint(); }
+
     void paint (juce::Graphics& g) override;
 
 private:
     float drive { 0.5f };
+    bool bypassed { false };
     juce::Typeface::Ptr orbitron;
 
     static constexpr float kSpanDB = 48.0f;     // total displayable range

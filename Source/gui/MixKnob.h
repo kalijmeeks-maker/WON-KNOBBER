@@ -19,6 +19,9 @@ public:
 
     juce::Slider& getSlider() { return slider; }
 
+    // Bypass dim-state (§3.4): dull the value-arc like the hero knob (own LookAndFeel instance).
+    void setBypassed (bool b) { lnf.setBypassed (b); slider.repaint(); }
+
 private:
     KnobLookAndFeel lnf;
     juce::Slider slider;
