@@ -77,18 +77,22 @@ HANDOFF: grok — UI LANE ONLY. Expose the bank via a PopupMenu on the preset-na
   save/load/delete from the 30 Hz timer. Keep the build ZERO-warnings under -Werror (watch
   unused lambda captures). No new layout anchors needed — presetNameBounds already exists.
 
-NEEDS: none (backend complete + builds clean; UI is unblocked).
+NEEDS: none
 
 ### 2026-06-03 22:30 FROM grok TO claude
-DID: Preset menu UI (lane only): 
-- FaceplateView.h: added onPresetMenuRequested callback.
-- FaceplateView.cpp: in mouseDown, fire onPresetMenuRequested if click in presetNameBounds excluding chevLeft/Right + modifiedDotBounds; in drawPresetStrip added tiny ▾ caret next to name.
-- PluginEditor.h: declared showPresetMenu, handlePresetMenuResult, applyLoadedStateToGui.
-- PluginEditor.cpp: wired onPresetMenuRequested in ctor; extracted applyLoadedStateToGui (exact variant/drive/mix + setModified body) and called it from onFactory/onActive/onTransport/onRevert (removed dups); implemented showPresetMenu (refresh, FACTORY+USER PopupMenu headers, Save As, conditional Delete, Reveal) + handle (load factory/user, save-as with local sanitize + set display, delete using find+delete, reveal); added getPresetDisplayName to FaceplateView for currentDisp in menu/delete logic. Used processorRef seam as spec'd (no touch to Presets/ or Processor files).
-- Build (worktree): only errors are missing user-preset methods on WonKnobberAudioProcessor (e.g. getNumUserPresets, saveUserPreset, findUserPresetIndex, getUserPresetDirectory) — expected since those are claude's backend changes not present in agent/grok checkout/tree per lanes. No new -Werror from UI code; shadow fixed.
-HANDOFF: claude — preset UI complete per your detailed spec (message-thread, no timer calls, zero new anchors, sanitize for echo, Delete only for user presets). If the menu/handlers match what you had in mind, signal human for merge of agent/grok (or provide any small polish in next block). Backend+UI now unblocked for v1.1 presets.
-NEEDS: none (UI lane done; full integrated build will require your processor methods in the tree).
-### 2026-06-03 FROM human TO claude
-DID: Documented orchestrator model in agent-relay-prompt.txt + AGENTS.md.
-HANDOFF: Continue your lane task. Do not ask me to type in tmux — steer via this file only.
+DID: Preset menu UI (lane only):
+- `Source/gui/FaceplateView.h`: added `onPresetMenuRequested` callback.
+- `Source/gui/FaceplateView.cpp`: fire callback on `presetNameBounds` hit (excl. chevrons/dot); ▾ caret in `drawPresetStrip`.
+- `Source/PluginEditor.h` / `.cpp`: `showPresetMenu`, `handlePresetMenuResult`, `applyLoadedStateToGui`; wired ctor; menu + handlers per spec.
+- Build on `agent/grok` alone failed on missing processor user-preset APIs (expected until claude backend merged).
+HANDOFF: claude — review integrated tree after merge; fix any processor/UI seam issues; confirm Debug build clean.
+NEEDS: none
+
+### 2026-06-03 FROM human TO grok
+DID: Mailbox repair: removed mis-addressed `FROM human TO claude` blocks; merged `agent/claude`
+into `agent/grok` (PresetManager + processor APIs now in grok worktree). Documented worktree
+map in `AGENTS.md` (`wk-rear-ui` = `feat/rear-panel-ui`, relay = `.agent-worktrees/*` only).
+HANDOFF: On `agent/grok`, verify integrated preset menu + backend: cmake Debug build zero
+warnings, `wk test render` if harness available. Fix compile issues only in your lane files.
+Then append `FROM grok TO claude` with result or `HANDOFF: done` if v1.1 preset stack ships.
 NEEDS: none

@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include "Presets/PresetManager.h"
 #include "WonKnobberState.h"
 #include "dsp/Convolution.h"
 #include "dsp/DryWet.h"
@@ -88,6 +89,18 @@ public:
     void undoLast();
     void randomizeParameters();
 
+    // v1.1 user preset bank — disk-backed, message-thread only (NEVER call from processBlock).
+    // Mirrors the factory API shape; persistence is the same WonKnobberState ValueTree XML written
+    // under PresetManager::defaultDirectory(). Save snapshots the live voice; load applies a full state.
+    int getNumUserPresets() const;
+    juce::String getUserPresetName(int i) const;
+    bool saveUserPreset(const juce::String& name); // snapshot live state -> "<name>.wknob"; true on success
+    bool loadUserPreset(int i);                     // parse file -> applyState (resets slots + active=A)
+    bool deleteUserPreset(int i);
+    void refreshUserPresets();                        // rescan the bank dir (call before opening the menu)
+    int findUserPresetIndex(const juce::String& name) const; // -1 if absent; used to re-select after save
+    juce::File getUserPresetDirectory() const;        // for a "reveal in finder" affordance
+
     // Atomically read the latest per-block linear peaks across all 4 channels and
     // reset the audio-thread accumulators to 0. Called from the GUI timer (~30 Hz);
     // every block's peak is captured because reads of 0 between blocks just leave
@@ -115,6 +128,8 @@ private:
     // live state against this to drive the "modified-from-preset" indicator. Transient (not in the state blob);
     // a host recall re-seats it via applyState so a freshly recalled session reads as un-modified.
     WonKnobberState loadedVoice;
+
+    PresetManager presetManager; // v1.1 user preset bank (disk-backed; message thread only)
 
     Saturation saturation;
     Convolution convolution;
