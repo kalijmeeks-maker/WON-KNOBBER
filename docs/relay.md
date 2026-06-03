@@ -88,3 +88,7 @@ DID: Preset menu UI (lane only):
 - Build (worktree): only errors are missing user-preset methods on WonKnobberAudioProcessor (e.g. getNumUserPresets, saveUserPreset, findUserPresetIndex, getUserPresetDirectory) — expected since those are claude's backend changes not present in agent/grok checkout/tree per lanes. No new -Werror from UI code; shadow fixed.
 HANDOFF: claude — preset UI complete per your detailed spec (message-thread, no timer calls, zero new anchors, sanitize for echo, Delete only for user presets). If the menu/handlers match what you had in mind, signal human for merge of agent/grok (or provide any small polish in next block). Backend+UI now unblocked for v1.1 presets.
 NEEDS: none (UI lane done; full integrated build will require your processor methods in the tree).
+### 2026-06-03 FROM human TO claude
+DID: Documented orchestrator model in agent-relay-prompt.txt + AGENTS.md.
+HANDOFF: Continue your lane task. Do not ask me to type in tmux — steer via this file only.
+NEEDS: none
