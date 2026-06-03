@@ -5,7 +5,8 @@ This folder is the handoff dock between Design and Claude/Grok.
 
 ## Workflow
 
-1. Work in **Claude Design** (browser).
+1. Work in **Claude Design** (browser): `wk design open`  
+   (WON-KNOBBER project: faceplate background in [Claude Design](https://claude.ai/design/p/1530ffb6-6fcb-48a7-994b-a8f17675fa90?file=exports%2Ffaceplate-pro-background-960x612.png) — stored in `~/.config/wk-team/config.json` as `design_url`).
 2. Save deliverables into the repo (`Resources/`, `docs/design-handoff-*.md`, etc.) and commit.
 3. Fill in **`HANDOFF.md`** in this folder (copy from `HANDOFF.template.md`).
 4. Run:
