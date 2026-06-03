@@ -11,18 +11,25 @@
 
 Reference comp: `modified-dot-spec.html` (Design handoff when committed to repo).
 
-## When to show
+## When to show (Design-locked 2026-06-02 — narrow rule)
 
-`isDirty` when **any** of these differ from the loaded factory voice snapshot:
+`isDirty` when **any of the four identity fields** differ from the loaded factory voice snapshot:
 
-- `drive`, `mix`, `cabIr`, `neuralModel`, `cabEngage`, `neuralEngage`
+- `cabIr`, `neuralModel`, `cabEngage`, `neuralEngage`
+
+**Not** `drive` / `mix` — riding the main knobs is expected; dot surfaces hidden rear cab/neural overrides on the front face.
 
 Hidden when clean.
 
+## Anchor (locked)
+
+- Immediately **right of** `.mk-preset-name`, vertically centred (`align-self: center`), `margin-left: 2px`
+- **Hit-target:** 20×20 px transparent wrap centred on 6 px dot, `cursor: pointer`
+
 ## Clear / revert
 
-- Clears on preset load (clean stamp of all six fields)
-- Click dot → revert all six to loaded voice values
+- Clears on preset load (preset still stamps all six fields — see `preset-override-precedence.md`)
+- Click dot → revert **four identity fields** only; leave `drive` / `mix` as the user set them
 - **Tooltip:** `MODIFIED FROM {VOICE} · CLICK TO REVERT`
 
 ## Precedence (see `preset-override-precedence.md`)

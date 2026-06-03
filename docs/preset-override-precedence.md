@@ -7,7 +7,7 @@ Applies whether cab/neural are exposed on rear or front.
 1. **Load preset** → stamps `drive`, `mix`, `variant` (gem), `cabIr`, `neuralModel`, `cabEngage`, `neuralEngage` from factory voice.
 2. **User edits** (rear wells, rockers, knobs) → persist in live state until the **next** preset load.
 3. **Factory preset files** on disk are **not** rewritten by user tweaks.
-4. **Modified dot** (`modified-from-preset-indicator.md`) → only UI signal that live state diverged from last loaded voice.
+4. **Modified dot** (`modified-from-preset-indicator.md`) → UI signal when **cabIr / neuralModel / cabEngage / neuralEngage** diverge from last loaded voice (not drive/mix).
 
 ## CC implementation notes
 
