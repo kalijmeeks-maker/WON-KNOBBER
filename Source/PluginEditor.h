@@ -22,6 +22,10 @@ public:
 private:
     void timerCallback() override; // pushes Drive (incl. host automation) to the scopes
 
+    void showPresetMenu();
+    void handlePresetMenuResult(int);
+    void applyLoadedStateToGui();
+
     WonKnobberAudioProcessor& processorRef;
     FaceplateView faceplate;
     double lastTickSec { 0.0 }; // ballistics dt — first tick falls back to 1/30 s
