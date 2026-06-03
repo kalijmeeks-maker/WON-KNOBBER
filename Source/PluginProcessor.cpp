@@ -140,6 +140,10 @@ WonKnobberState WonKnobberAudioProcessor::getCurrentState() const noexcept
     s.mix = mix ? mix->get() : 1.0f;
     s.variant = currentVariant;
     s.bypass = bypassState;
+    s.cabIr = currentCabIr;
+    s.neuralModel = currentNeuralModel;
+    s.cabEngage = cabEngage;
+    s.neuralEngage = neuralEngage;
     return s;
 }
 
@@ -151,6 +155,10 @@ void WonKnobberAudioProcessor::applyStateToParams(const WonKnobberState& st) noe
     if (mix != nullptr)
         *mix = st.mix;
     bypassState = st.bypass;
+    currentCabIr = st.cabIr;
+    currentNeuralModel = st.neuralModel;
+    cabEngage = st.cabEngage;
+    neuralEngage = st.neuralEngage;
 }
 
 void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
