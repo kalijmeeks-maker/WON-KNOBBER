@@ -157,12 +157,11 @@ void FaceplateView::resized()
         const int nameW = juce::jmax(80, chevRightStartGuess - x);
         presetNameBounds = juce::Rectangle<int>(x, ps.getY() + margin / 2, nameW, ps.getHeight() - margin);
 
-        // "Modified" ember dot: a 6px (ref-scaled) dot just inside the name LED's right edge,
-        // vertically centred. The hit-target is padded for an easy click, kept within the name box
-        // so it never overlaps the right chevron.
-        const int dotSize = juce::jmax(6, ps.getHeight() / 4);
-        const int hit = juce::jmax(dotSize + 6, ps.getHeight() - margin);
-        const int dotCx = presetNameBounds.getRight() - dotSize / 2 - 4;
+        // "Modified" ember dot (Design spec): ~6px against the preset name's right edge, vertically
+        // centred, with a ~20px transparent hit-target centred on it (6px is too small to click).
+        const int dotSize = juce::jmax(5, ps.getHeight() / 6);  // ~6px
+        const int hit = juce::jmax(16, ps.getHeight() / 2);     // ~20px hit-target
+        const int dotCx = presetNameBounds.getRight() - dotSize;
         const int dotCy = presetNameBounds.getCentreY();
         modifiedDotBounds = juce::Rectangle<int>(dotCx - hit / 2, dotCy - hit / 2, hit, hit);
 
@@ -325,23 +324,28 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
         g.drawText(disp, presetNameBounds, juce::Justification::centred, false);
     }
 
-    // "Modified-from-preset" ember dot — shown only when the live state diverges from the loaded voice.
-    // A 6px dot drawn at the centre of its (padded) hit-target, just inside the name LED's right edge.
+    // "Modified-from-preset" ember dot (Design spec) — shown only when the live cab/neural identity
+    // diverges from the loaded voice. ~6px, radial ember (highlight at ~40%/35%), amber glow bloom.
     if (modified && !modifiedDotBounds.isEmpty())
     {
-        const float dotD = juce::jmax(6.0f, h * 0.25f);
+        const float dotD = juce::jmax(5.0f, h * 0.16f); // ~6px
         const auto centre = modifiedDotBounds.getCentre().toFloat();
         const juce::Rectangle<float> dot(centre.x - dotD * 0.5f, centre.y - dotD * 0.5f, dotD, dotD);
-        // Bonus vertical gradient (#ffd28a -> #ff8800 -> #a35d00); the solid #ff8800 mid-stop is the
-        // required colour, so it still reads correct if a renderer ignores the gradient.
-        juce::ColourGradient grad(juce::Colour(0xffffd28a), dot.getCentreX(), dot.getY(), juce::Colour(0xffa35d00),
-                                  dot.getCentreX(), dot.getBottom(), false);
-        grad.addColour(0.5, juce::Colour(0xffff8800));
-        g.setGradientFill(grad);
+
+        // Amber glow bloom (Design: 0 0 7px rgba(255,150,30,.8)).
+        const float glowR = dotD * 1.9f;
+        juce::ColourGradient glow(juce::Colour(0xffff961e).withAlpha(0.80f), centre.x, centre.y,
+                                  juce::Colour(0x00ff961e), centre.x + glowR, centre.y, true);
+        g.setGradientFill(glow);
+        g.fillEllipse(centre.x - glowR, centre.y - glowR, glowR * 2.0f, glowR * 2.0f);
+
+        // Radial ember: #ffd28a highlight at ~40%/35% → #ff8800 → #a35d00 rim.
+        const juce::Point<float> hl(dot.getX() + dotD * 0.40f, dot.getY() + dotD * 0.35f);
+        juce::ColourGradient ember(juce::Colour(0xffffd28a), hl.x, hl.y, juce::Colour(0xffa35d00),
+                                   hl.x + dotD * 0.6f, hl.y, true);
+        ember.addColour(0.5, juce::Colour(0xffff8800));
+        g.setGradientFill(ember);
         g.fillEllipse(dot);
-        // Subtle ember rim so it sits convincingly in the brushed-metal recess.
-        g.setColour(juce::Colour(0xff5a3300).withAlpha(0.6f));
-        g.drawEllipse(dot, 0.6f);
     }
 
     // Chevrons (‹ ›) — clickable, tone-on-tone.

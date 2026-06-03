@@ -195,12 +195,10 @@ void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
 
 bool WonKnobberAudioProcessor::isDirty() const
 {
+    // Design call (modified-dot spec): only the four hidden cab/neural identity fields count as
+    // "modified" — NOT drive/mix. Riding DRIVE/MIX is the expected one-knob interaction and is
+    // already visible on the face; the dot exists to surface a rear override you can't otherwise see.
     const WonKnobberState live = getCurrentState();
-    constexpr float eps = 1.0e-4f;
-    if (std::abs(live.drive - loadedVoice.drive) > eps)
-        return true;
-    if (std::abs(live.mix - loadedVoice.mix) > eps)
-        return true;
     if (live.cabIr != loadedVoice.cabIr)
         return true;
     if (live.neuralModel != loadedVoice.neuralModel)
@@ -214,9 +212,14 @@ bool WonKnobberAudioProcessor::isDirty() const
 
 void WonKnobberAudioProcessor::revertToLoadedPreset()
 {
-    // Re-apply the snapshot to live params/variant (does not disturb A/B slots or the active selection;
-    // applyStateToParams leaves loadedVoice intact so the dirty flag clears cleanly).
-    applyStateToParams(loadedVoice);
+    // Design call: revert ONLY the four identity fields (cab/neural) to the loaded voice; leave
+    // drive/mix/variant where the user has them. Clears the dirty flag without touching the knobs.
+    WonKnobberState s = getCurrentState();
+    s.cabIr = loadedVoice.cabIr;
+    s.neuralModel = loadedVoice.neuralModel;
+    s.cabEngage = loadedVoice.cabEngage;
+    s.neuralEngage = loadedVoice.neuralEngage;
+    applyStateToParams(s);
 }
 
 namespace
@@ -576,23 +579,27 @@ static bool runPresetTransportAPITests()
             pass = false;
     }
 
-    // isDirty / revertToLoadedPreset: a fresh factory load is clean; a manual tweak to any of the six
-    // identity fields flips dirty; revert restores the baseline and clears it.
+    // isDirty / revertToLoadedPreset: only the four cab/neural identity fields count as "modified"
+    // (Design call — NOT drive/mix). Loading a voice seats the baseline (clean), and riding DRIVE/MIX
+    // must stay CLEAN. Divergence of the four fields -> dirty is driven by the rear-panel override
+    // (PR 4); until those setters land the four fields only change via a preset load, which re-stamps.
     {
-        proc.loadFactoryPreset(0); // TAPE HEAD: drive=0.42, cab/neural engaged
+        proc.loadFactoryPreset(0); // TAPE HEAD
         bool cleanAfterLoad = !proc.isDirty();
 
         if (auto* d = proc.getDriveParameter())
-            *d = 0.42f + 0.2f; // diverge drive past the 1e-4 epsilon
-        bool dirtyAfterTweak = proc.isDirty();
+            *d = 0.42f + 0.2f; // ride DRIVE — must stay CLEAN under the four-field rule
+        bool cleanAfterDrive = !proc.isDirty();
 
-        proc.revertToLoadedPreset();
-        float reverted = proc.getDriveParameter() ? proc.getDriveParameter()->get() : -1.0f;
-        bool cleanAfterRevert = !proc.isDirty() && std::abs(reverted - 0.42f) < 1.0e-4f;
+        proc.loadFactoryPreset(2);   // FURNACE: different cab/neural — re-stamps, still clean
+        bool cleanAfterReload = !proc.isDirty();
+        proc.revertToLoadedPreset(); // no-op while clean
+        bool cleanAfterRevert = !proc.isDirty();
 
-        bool dirtyOK = cleanAfterLoad && dirtyAfterTweak && cleanAfterRevert;
-        std::cout << "PRESET API [isDirty/revert]: " << (dirtyOK ? "PASS" : "FAIL") << " load=" << (cleanAfterLoad ? 1 : 0)
-                  << " tweak=" << (dirtyAfterTweak ? 1 : 0) << " revert=" << (cleanAfterRevert ? 1 : 0) << std::endl;
+        bool dirtyOK = cleanAfterLoad && cleanAfterDrive && cleanAfterReload && cleanAfterRevert;
+        std::cout << "PRESET API [isDirty four-field]: " << (dirtyOK ? "PASS" : "FAIL")
+                  << " load=" << (cleanAfterLoad ? 1 : 0) << " drive-clean=" << (cleanAfterDrive ? 1 : 0)
+                  << " reload=" << (cleanAfterReload ? 1 : 0) << " revert=" << (cleanAfterRevert ? 1 : 0) << std::endl;
         if (!dirtyOK)
             pass = false;
     }
