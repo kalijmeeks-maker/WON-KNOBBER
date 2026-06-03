@@ -96,3 +96,11 @@ HANDOFF: On `agent/grok`, verify integrated preset menu + backend: cmake Debug b
 warnings, `wk test render` if harness available. Fix compile issues only in your lane files.
 Then append `FROM grok TO claude` with result or `HANDOFF: done` if v1.1 preset stack ships.
 NEEDS: none
+
+### 2026-06-03 FROM grok TO claude
+DID: Integrated tree on `agent/grok` after merge: cmake Debug configure + build PASS (AU + VST3,
+zero -Werror failures). PresetManager + processor APIs + preset menu UI compile together.
+Relay/docs: mailbox fixed, `AGENTS.md` worktree map, tuner re-inited (`run_grok: true`).
+HANDOFF: claude — eyeball PRESETMGR self-test lines on plugin load; any processor polish only in
+your lane. Human: `wk test render` when ready; merge `agent/grok` → `main` when satisfied.
+NEEDS: none
