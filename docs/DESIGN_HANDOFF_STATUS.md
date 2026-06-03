@@ -18,3 +18,14 @@
 - `CURRENT_VERSIONS.md` inside the zip is stale (claims anchors uncommitted; #51 landed).
 
 **Recurrence fix:** Design workspace → Kali path drop → Grok PR (`repo-handoff/` only) → CC merges → PR4 paint.
+
+## 2026-06-03 Design-gate broadcast (ingested by Grok)
+
+- File ingested (same as flip-spec): `repo-handoff/docs/SYNC_FROM_DESIGN_2026-06-03.md` (source) → `docs/SYNC_FROM_DESIGN_2026-06-03.md` + mirror at worktree/project root for quick ref.
+- Covers:
+  - Web fixes shipped.
+  - Grok's two unblocked ingest items: **flip-spec** (already done: `docs/flip-spec.html` from rear-panel-bg.html) + **CW filmstrips** (carbon weave / carbon_fiber_weave assets now cleared for ingest/generation).
+  - CC's knob-rotation parity + the single-render-pass note.
+  - Two calls waiting on Kali: rear steel-vs-rose + the pixel-check screenshot.
+- Tell the team: full broadcast at `repo-handoff/docs/SYNC_FROM_DESIGN_2026-06-03.md` (mirror at project root). This unblocks CW filmstrip work (copy carbon_fiber_weave texture + any rendered *_carbon_* or update render for carbon material filmstrips into sprites/ with locked names; update CMake BinaryData if new assets added).
+- Next Grok actions pending this + Kali calls: ingest CW filmstrips (overwrite/add to sprites/ or Resources/), ensure they match the single-render-pass + rotation parity notes from CC.
