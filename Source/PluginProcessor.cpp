@@ -604,6 +604,23 @@ static bool runPresetTransportAPITests()
             pass = false;
     }
 
+    // Design check: EVERY factory voice must read isDirty()==false immediately on load — i.e. each
+    // baked cab/neural XML id exactly matches the loadedVoice snapshot, so no voice loads already-dirty.
+    {
+        bool allClean = true;
+        const int nFac = proc.getNumFactoryPresets();
+        for (int i = 0; i < nFac; ++i)
+        {
+            proc.loadFactoryPreset(i);
+            if (proc.isDirty())
+                allClean = false;
+        }
+        std::cout << "PRESET API [all voices load clean]: " << (allClean ? "PASS" : "FAIL") << " n=" << nFac
+                  << std::endl;
+        if (!allClean)
+            pass = false;
+    }
+
     std::cout << "PRESET TRANSPORT API TESTS OVERALL: " << (pass ? "PASS" : "FAIL") << std::endl;
     return pass;
 }
