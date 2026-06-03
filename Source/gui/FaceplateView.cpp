@@ -96,6 +96,14 @@ void FaceplateView::paint(juce::Graphics& g)
     // Drawn after chassis so text/buttons sit in the photoreal footer recesses.
     drawPresetStrip(g);
     drawTransportTray(g);
+
+    // §3.4 bypass panel wash — cool blue-grey "offline" cue beneath the live layers (which render
+    // on top at their own dim levels). Approximates the multiply wash from bypass-dimstate-tokens.json.
+    if (bypassed)
+    {
+        g.setColour(juce::Colour(20, 30, 44).withAlpha(0.40f));
+        g.fillRect(getLocalBounds());
+    }
 }
 
 void FaceplateView::resized()
@@ -214,11 +222,18 @@ void FaceplateView::setActiveSlot(char s)
 
 void FaceplateView::setBypassed(bool b)
 {
-    if (bypassed != b)
-    {
-        bypassed = b;
-        repaint();
-    }
+    if (bypassed == b)
+        return;
+    bypassed = b;
+    // §3.4 per-element de-energize: each lit/processing layer dims; meters keep moving (grey).
+    statusLEDs.setBypassed(b);
+    ioMeter.setBypassed(b);
+    transferCurve.setBypassed(b);
+    harmonicBars.setBypassed(b);
+    dbReadout.setBypassed(b);
+    knobLnf.setBypassed(b);
+    driveKnob.repaint();
+    repaint();
 }
 
 void FaceplateView::mouseDown(const juce::MouseEvent& e)
@@ -405,14 +420,16 @@ void FaceplateView::drawTransportTray(juce::Graphics& g)
 
 void FaceplateView::paintOverChildren(juce::Graphics& g)
 {
-    // Dim veil over the entire faceplate (incl. live children) signals "inactive".
+    // §3.4 dim-state is now per-element (children dim themselves; the panel wash is in paint()).
+    // Here we only cool the hero stone — a filmstrip can't be desaturated in place, so a cool
+    // overlay over the knob well reads it as a cold, lifeless stone.
     if (bypassed)
     {
-        g.setColour(juce::Colour(0xff0a0b0d).withAlpha(0.55f));
-        g.fillRect(getLocalBounds());
+        g.setColour(juce::Colour(20, 30, 44).withAlpha(0.45f));
+        g.fillEllipse(driveKnob.getBounds().toFloat());
     }
 
-    // Rocker is drawn after the veil so the bypass control stays crisp + lit on top.
+    // Rocker stays crisp + lit on top — it's the control to re-energize.
     drawBypassRocker(g);
     drawAboutButton(g);
 

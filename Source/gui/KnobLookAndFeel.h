@@ -34,6 +34,9 @@ public:
     // Read-only access to the registered variant names (insertion order).
     const juce::StringArray& getVariantNames() const noexcept { return variantNames; }
 
+    // Bypass dim-state (§3.4): the value-arc fades to a dull grey-amber. Knob cap is hardware.
+    void setBypassed (bool b) noexcept { bypassed = b; }
+
 private:
     static constexpr int numFrames = 120; // Blender renders are 120-frame strips (256x30720)
 
@@ -41,4 +44,5 @@ private:
     juce::String currentVariant;       // stone name; empty until first addVariant
     juce::StringArray variantNames;    // insertion order — for the picker menu
     std::array<juce::Image, 16> variants{}; // backing store; index parallels variantNames
+    bool bypassed { false };
 };

@@ -78,17 +78,25 @@ void IOMeter::paint (juce::Graphics& g)
         g.setColour (juce::Colour (0xff0a0a0c).withAlpha (0.92f));
         g.fillRoundedRectangle (track, trackThickness * 0.35f);
 
-        // Filled portion in the Design gradient (left → right).
+        // Filled portion. Bypassed → flat neutral grey (still animating — audio passes);
+        // engaged → the Design level gradient (left → right).
         if (s.bar > 0.0f)
         {
-            juce::ColourGradient grad (juce::Colour (0xff1a9a48), track.getX(),     0.0f,
-                                       juce::Colour (0xffff3300), track.getRight(), 0.0f, false);
-            grad.addColour (0.60f, juce::Colour (0xff4cff8e));
-            grad.addColour (0.78f, juce::Colour (0xffff9a00));
-            g.setGradientFill (grad);
+            if (bypassed)
+            {
+                g.setColour (juce::Colour (0xff6a6e74)); // §3.4 io_meters.recolor
+            }
+            else
+            {
+                juce::ColourGradient grad (juce::Colour (0xff1a9a48), track.getX(),     0.0f,
+                                           juce::Colour (0xffff3300), track.getRight(), 0.0f, false);
+                grad.addColour (0.60f, juce::Colour (0xff4cff8e));
+                grad.addColour (0.78f, juce::Colour (0xffff9a00));
+                g.setGradientFill (grad);
+            }
 
             const auto fill = track.withWidth (track.getWidth() * s.bar);
-            // Clip the rounded mask so the gradient terminates cleanly inside the track.
+            // Clip the rounded mask so the fill terminates cleanly inside the track.
             juce::Graphics::ScopedSaveState save (g);
             juce::Path mask;
             mask.addRoundedRectangle (track, trackThickness * 0.35f);
@@ -96,8 +104,8 @@ void IOMeter::paint (juce::Graphics& g)
             g.fillRect (fill);
         }
 
-        // Peak-hold marker (1.5-px vertical line). Colour shifts at the amber knee.
-        if (s.holdPos > 0.0f)
+        // Peak-hold marker (1.5-px vertical line) — suppressed when bypassed (no accent/glow).
+        if (! bypassed && s.holdPos > 0.0f)
         {
             const float markerX = track.getX() + track.getWidth() * s.holdPos;
             g.setColour (s.holdPos > 0.78f ? juce::Colour (0xffff5530)

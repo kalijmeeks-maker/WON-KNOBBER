@@ -27,9 +27,15 @@ public:
     // so frame-rate jitter doesn't bias hold/decay.
     void pushPeaks (float inL, float inR, float outL, float outR, float dt) noexcept;
 
+    // Bypass dim-state (§3.4): meters KEEP MOVING (audio still passes) but recolour neutral grey,
+    // no peak-hold accent — separates "bypassed" from "crashed".
+    void setBypassed (bool b) noexcept { bypassed = b; repaint(); }
+
     void paint (juce::Graphics& g) override;
 
 private:
+    bool bypassed { false };
+
     struct RowState
     {
         float bar     { 0.0f }; // current displayed bar fill (0..1)

@@ -76,6 +76,7 @@ void KnobLookAndFeel::drawRotarySlider (juce::Graphics& g, int x, int y, int wid
     arc.addCentredArc   (centre.x, centre.y, r, r, 0.0f, rotaryStartAngle, toAngle, true);
     g.setColour (juce::Colours::black.withAlpha (0.35f));
     g.strokePath (track, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    g.setColour (juce::Colour (0xffFE9A00));
+    g.setColour (bypassed ? juce::Colour (0xff6e6256).withAlpha (0.15f)  // §3.4 value_arc: dull grey-amber
+                          : juce::Colour (0xffFE9A00));
     g.strokePath (arc, juce::PathStrokeType (3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
