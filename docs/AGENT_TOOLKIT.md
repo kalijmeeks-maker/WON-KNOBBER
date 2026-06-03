@@ -17,6 +17,8 @@ wk pin flip && wk drive flip bypass
 
 Relay: `wk agent .` from this repo (requires `AGENTS.md` + `docs/relay.md` at repo root or parent protocol).
 
+**Start your day:** `wk day` (or `wk day /path/to/any-relay-repo`) — health, relay tail, worktrees, tmux status, which folder to open in Claude Code.
+
 ### Agents: you are not in a chat pane
 
 `wkteam` opens tmux for **monitoring**, not conversation. Your turn is **`docs/relay.md` +
