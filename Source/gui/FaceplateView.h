@@ -128,11 +128,20 @@ private:
     // sits above the live child components; hit-tested inline in mouseDown (no extra child comps).
     bool bypassed{false};
     bool aboutVisible{false};
+    bool licencesVisible{false}; // full third-party licence scroll, layered above the About card
     juce::Rectangle<int> bypassRockerBounds; // bypass_rocker anchor [41,531,64,49]
     juce::Rectangle<int> aboutBtnBounds;     // small 'i' affordance, top-right
 
     void drawBypassRocker(juce::Graphics& g);
     void drawAboutButton(juce::Graphics& g);
     void drawAboutPanel(juce::Graphics& g);
-    juce::Rectangle<int> computeAboutPanelBounds() const; // centred modal rect (shared by paint + hit-test)
+    void drawLicencesPanel(juce::Graphics& g);
+    juce::String getLicencesBodyText() const;                  // verbatim Airwindows MIT text + per-asset note
+    juce::Rectangle<int> computeAboutPanelBounds() const;      // centred modal rect (shared by paint + hit-test)
+    juce::Rectangle<int> computeLicencesLinkBounds() const;    // "View full licences ▸" hit-target inside the About card
+    juce::Rectangle<int> computeLicencesPanelBounds() const;   // centred licences scroll rect (shared by paint + hit-test)
+    int licencesScrollY{0};                                    // current vertical scroll offset of the licence body (px, >= 0)
+    int licencesMaxScrollY{0};                                 // clamp bound recomputed each paint from text/content height
+
+    void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
 };
