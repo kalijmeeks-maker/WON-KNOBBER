@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "project": "WON-KNOBBER",
+  "date": "2026-06-02",
+  "author": "Grok / WON Producer",
+  "consumer": "Claude Code (integration)",
+  "ui_model": {
+    "summary": "Cab + neural fold into each factory voice (WonKnobberState). Rear panel overrides IR/model selection when user flips to rear. Front faceplate unchanged.",
+    "front_face_picker": false,
+    "rear_panel": "Design delivers anchors + PNG (long pole); CC wires after Grok assets land"
+  },
+  "rt_safe_swap": {
+    "rule": "IR and neural model change on preset load without click or dropout",
+    "ir": "Message thread: loadImpulseResponse from BinaryData; JUCE Convolution queues swap (wait-free on audio thread)",
+    "convolution_latency_mode": "zero_latency_v1_default — juce::dsp::Convolution() or Convolution(Latency{0}); trimmed mono IRs ≤2048 taps so getLatency() stays 0 across preset IR swaps (avoid setLatencySamples churn per voice)",
+    "neural": "Message thread: parse/build staging model; atomic shared_ptr swap; audio thread reads active only",
+    "pdc": "setLatencySamples(saturation + convolution.getLatency() + neuralLatency) at prepare; on IR swap only re-report if getLatency() changed (v1 expects 0 for all six cabs)",
+    "qa_fallback": "If zipper/click on fast preset cycle, add 32-128 sample crossfade between conv engines (CC PR)"
+  },
+  "ir_assets": [
+    {
+      "id": "FLAT",
+      "display_name": "FLAT",
+      "filename": "ir_flat.wav",
+      "binary_data_symbol": "ir_flat_wav",
+      "license_status": "ship_tier_a",
+      "license_note": "In-house synthetic minimum-phase or neutral capture; PolyForm-NC safe",
+      "format": { "container": "WAV", "sample_rate_hz": 48000, "bit_depth": 24, "channels": "mono" },
+      "production": { "trim_taps": 2048, "embed_bytes_approx": 8192 },
+      "cab_character": "Transparent, minimal coloration; default/reference curve"
+    },
+    {
+      "id": "STUDIO_RIBBON",
+      "display_name": "STUDIO RIBBON",
+      "filename": "ir_studio_ribbon.wav",
+      "binary_data_symbol": "ir_studio_ribbon_wav",
+      "license_status": "ship_tier_a",
+      "license_note": "In-house capture ribbon-mic voicing or approved PD IR trimmed; verify if third-party",
+      "format": { "container": "WAV", "sample_rate_hz": 48000, "bit_depth": 24, "channels": "mono" },
+      "production": { "trim_taps": 2048, "embed_bytes_approx": 8192 },
+      "cab_character": "Smooth top, controlled low; console/Tape Head family"
+    },
+    {
+      "id": "VINTAGE_4X12",
+      "display_name": "VINTAGE 4×12",
+      "filename": "ir_vintage_4x12.wav",
+      "binary_data_symbol": "ir_vintage_4x12_wav",
+      "license_status": "ship_tier_a",
+      "license_note": "In-house 4x12 capture; do not embed retail ML/OwnHammer without written grant",
+      "format": { "container": "WAV", "sample_rate_hz": 48000, "bit_depth": 24, "channels": "mono" },
+      "production": { "trim_taps": 2048, "embed_bytes_approx": 8192 },
+      "cab_character": "Classic rock 4x12 punch; FURNACE / TRANSFORMER family"
+    },
+    {
+      "id": "CONSOLE_BOX",
+      "display_name": "CONSOLE BOX",
+      "filename": "ir_console_box.wav",
+      "binary_data_symbol": "ir_console_box_wav",
+      "license_status": "ship_tier_a",
+      "license_note": "In-house closed-back box; CONSOLE GLUE anchor",
+      "format": { "container": "WAV", "sample_rate_hz": 48000, "bit_depth": 24, "channels": "mono" },
+      "production": { "trim_taps": 2048, "embed_bytes_approx": 8192 },
+      "cab_character": "Tight low-mid, mix-glue character"
+    },
+    {
+      "id": "OLD_RADIO",
+      "display_name": "OLD RADIO",
+      "filename": "ir_old_radio.wav",
+      "binary_data_symbol": "ir_old_radio_wav",
+      "license_status": "ship_tier_a",
+      "license_note": "In-house band-limited / small-speaker color; optional PD verify if sourced",
+      "format": { "container": "WAV", "sample_rate_hz": 48000, "bit_depth": 24, "channels": "mono" },
+      "production": { "trim_taps": 1536, "embed_bytes_approx": 6144 },
+      "cab_character": "Nascent highs, compressed mids; SUNDAY DRIVE / lo-fi"
+    },
+    {
+      "id": "IRON_CORE",
+      "display_name": "IRON CORE",
+      "filename": "ir_iron_core.wav",
+      "binary_data_symbol": "ir_iron_core_wav",
+      "license_status": "ship_tier_a",
+      "license_note": "In-house aggressive mid-forward 4x12; DIODE BITE / IRON neural pairing",
+      "format": { "container": "WAV", "sample_rate_hz": 48000, "bit_depth": 24, "channels": "mono" },
+      "production": { "trim_taps": 2048, "embed_bytes_approx": 8192 },
+      "cab_character": "Aggressive mids, firm low; high-gain voices"
+    }
+  ],
+  "ir_disqualified_examples": [
+    { "source": "ML Sound Lab free/paid packs", "reason": "EULA forbids copy/distribute/embed" },
+    { "source": "CC-BY-SA, GPL IR collections", "reason": "Share-alike / copyleft — disqualifier for v1 embed" },
+    { "source": "Retail IR libraries (OwnHammer, etc.)", "reason": "No redistribution in binary" }
+  ],
+  "neural_slots": [
+    {
+      "id": "NONE",
+      "display_name": "NONE",
+      "filename": null,
+      "binary_data_symbol": null,
+      "embed_bytes_approx": 0,
+      "license": "N/A — bypass stage",
+      "latency_samples": 0,
+      "integration": "neuralEngage=false or slot=NONE skips process()"
+    },
+    {
+      "id": "TAPE",
+      "display_name": "TAPE",
+      "filename": "model_tape.json",
+      "binary_data_symbol": "model_tape_json",
+      "embed_bytes_approx": 65536,
+      "license": "Weights trained in-house; RTNeural BSD-3 engine attribution in THIRD_PARTY",
+      "latency_samples": 0,
+      "architecture": "RTNeural feedforward MLP (export JSON); soft saturation color"
+    },
+    {
+      "id": "VALVE",
+      "display_name": "VALVE",
+      "filename": "model_valve.json",
+      "binary_data_symbol": "model_valve_json",
+      "embed_bytes_approx": 65536,
+      "license": "In-house weights",
+      "latency_samples": 0,
+      "architecture": "RTNeural feedforward MLP; even harmonics bias"
+    },
+    {
+      "id": "TRANSISTOR",
+      "display_name": "TRANSISTOR",
+      "filename": "model_transistor.json",
+      "binary_data_symbol": "model_transistor_json",
+      "embed_bytes_approx": 65536,
+      "license": "In-house weights",
+      "latency_samples": 0,
+      "architecture": "RTNeural feedforward MLP; tighter transient"
+    },
+    {
+      "id": "IRON",
+      "display_name": "IRON",
+      "filename": "model_iron.json",
+      "binary_data_symbol": "model_iron_json",
+      "embed_bytes_approx": 98304,
+      "license": "In-house weights",
+      "latency_samples": 0,
+      "architecture": "RTNeural feedforward MLP; aggressive color"
+    }
+  ],
+  "engine_recommendation": {
+    "v1": "RTNeural",
+    "backend": "RTNEURAL_STL",
+    "cmake": "FetchContent RTNeural; pin GIT_TAG to commit SHA below (reproducible CI)",
+    "fetchcontent": {
+      "git_repository": "https://github.com/jatinchowdhury18/RTNeural.git",
+      "git_tag": "1fb1f075a5d66e85bfc8f488c3f3626840cb3a1d",
+      "git_tag_note": "RTNeural main @ 2026-06-02 (ls-remote HEAD); RTNEURAL_STL=ON",
+      "git_shallow": true,
+      "compile_definitions": ["RTNEURAL_DEFAULT_ALIGNMENT=16"]
+    },
+    "defer": "ONNX Runtime",
+    "defer_reason": "Dylib weight + Windows/mac CI packaging; no user-ONNX requirement for v1"
+  },
+  "bundle_budget_total_kb_approx": 350,
+  "preset_voice_map_authoritative": {
+    "source": "docs/voice-cab-neural-map.md (Claude Design 2026-06-02, WON-KNOBBER PR #43)",
+    "ui_display_names": "See cab-neural-id-bridge.json (STUDIO RIBBON, TAPE-1971, …)",
+    "voices": [
+      { "factory_index": 0, "name": "TAPE HEAD", "cabIr": "STUDIO_RIBBON", "neuralModel": "TAPE", "cabEngage": true, "neuralEngage": true },
+      { "factory_index": 1, "name": "CONSOLE GLUE", "cabIr": "FLAT", "neuralModel": "NONE", "cabEngage": false, "neuralEngage": false },
+      { "factory_index": 2, "name": "FURNACE", "cabIr": "VINTAGE_4X12", "neuralModel": "VALVE", "cabEngage": true, "neuralEngage": true },
+      { "factory_index": 3, "name": "VELVET", "cabIr": "STUDIO_RIBBON", "neuralModel": "TAPE", "cabEngage": true, "neuralEngage": true },
+      { "factory_index": 4, "name": "SUNDAY DRIVE", "cabIr": "OLD_RADIO", "neuralModel": "TRANSISTOR", "cabEngage": true, "neuralEngage": true },
+      { "factory_index": 5, "name": "TUBE WARM", "cabIr": "CONSOLE_BOX", "neuralModel": "VALVE", "cabEngage": true, "neuralEngage": true },
+      { "factory_index": 6, "name": "DIODE BITE", "cabIr": "VINTAGE_4X12", "neuralModel": "TRANSISTOR", "cabEngage": true, "neuralEngage": true },
+      { "factory_index": 7, "name": "TRANSFORMER", "cabIr": "IRON_CORE", "neuralModel": "IRON", "cabEngage": true, "neuralEngage": true }
+    ]
+  },
+  "wonknobber_state_schema_v2": {
+    "xml_attributes_append_only": [
+      "cabIr",
+      "neuralModel",
+      "cabEngage",
+      "neuralEngage"
+    ],
+    "canonical_attr_keys": {
+      "cabIr": "string enum — FLAT | STUDIO_RIBBON | VINTAGE_4X12 | CONSOLE_BOX | OLD_RADIO | IRON_CORE",
+      "neuralModel": "string enum — NONE | TAPE | VALVE | TRANSISTOR | IRON (Design locked; not neural)",
+      "cabEngage": "0 | 1",
+      "neuralEngage": "0 | 1"
+    },
+    "example": "<WonKnobberState version=\"1\" drive=\"0.86\" mix=\"1.0\" variant=\"ruby\" bypass=\"0\" cabIr=\"VINTAGE_4X12\" neuralModel=\"IRON\" cabEngage=\"1\" neuralEngage=\"1\"/>",
+    "host_state": "WK2 magic + ValueTree unchanged; new attrs round-trip via toValueTree/fromValueTree",
+    "rear_override": "Rear panel writes cabIr/neuralModel ids + engage flags into live state; saved to A/B slots with saveToActiveSlot",
+    "cc_implementation": "feat/won-state-cab-neural-fields — WonKnobberState.h uses exactly these keys"
+  },
+  "cmake_binary_data_append": [
+    "Resources/IRs/ir_flat.wav",
+    "Resources/IRs/ir_studio_ribbon.wav",
+    "Resources/IRs/ir_vintage_4x12.wav",
+    "Resources/IRs/ir_console_box.wav",
+    "Resources/IRs/ir_old_radio.wav",
+    "Resources/IRs/ir_iron_core.wav",
+    "Resources/Models/model_tape.json",
+    "Resources/Models/model_valve.json",
+    "Resources/Models/model_transistor.json",
+    "Resources/Models/model_iron.json"
+  ],
+  "pr_sequence_cc": [
+    "feat/won-state-cab-neural-fields",
+    "feat/convolution-six-ir-embed",
+    "feat/rtneural-five-slot-embed",
+    "feat/rear-panel-ui (blocked on Design anchors PNG)"
+  ],
+  "related_docs": [
+    "uploads/WON_IR_cab_shortlist_spike_2026-06-02.md",
+    "uploads/WON_RTNeural_vs_ONNX_spike_2026-06-02.md",
+    "WON-KNOBBER/docs/voice-cab-neural-map.md",
+    "WON-KNOBBER/docs/cab-neural-id-bridge.json",
+    "WON-KNOBBER/docs/SYNC_TO_CC_cab_neural_direction.md"
+  ]
+}
