@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "source": "Claude Design SYNC_TO_CC_cab_neural_direction.md §3 (2026-06-02)",
+  "note": "Wire verbatim in CC item 4. If Design pasted a different canonical JSON in chat, replace this file and re-merge.",
+  "transition": {
+    "duration_ms": 180,
+    "easing": "ease-out",
+    "bounce": false
+  },
+  "chassis": {
+    "cool_multiply_wash": true,
+    "desaturate_amount": 0.12,
+    "comment": "Global cool wash — not a hue swap"
+  },
+  "leds_power_sig_clip": {
+    "opacity": 0.0,
+    "glow": false,
+    "comment": "All dark, no glow when bypassed"
+  },
+  "scopes_transfer_harmonics": {
+    "opacity": 0.25,
+    "freeze": true,
+    "comment": "Drop to ~25% and freeze — no live motion"
+  },
+  "knob_value_arc": {
+    "opacity": 0.15,
+    "tint": "dull_grey_amber",
+    "comment": "Amber arc → dull grey-amber ~15%"
+  },
+  "gem": {
+    "desaturate": 0.5,
+    "specular_life": 0.0,
+    "comment": "Cold stone — lose specular life"
+  },
+  "db_readout": {
+    "opacity": 0.3,
+    "tint": "dull_ember",
+    "comment": "Still legible"
+  },
+  "io_meters": {
+    "keep_animating": true,
+    "recolor_grey": true,
+    "opacity": 1.0,
+    "comment": "NON-OBVIOUS RULE: meters keep moving in grey while audio passes"
+  }
+}
