@@ -129,6 +129,22 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
         }
     };
 
+    // Modified-from-preset dot: clicking it reverts the live state to the loaded voice, then refreshes
+    // the GUI exactly like the load/undo transport actions do (knob/mix/variant pulled back from processor).
+    faceplate.onRevertToPreset = [this]
+    {
+        processorRef.revertToLoadedPreset();
+        faceplate.setVariant(processorRef.getCurrentVariant());
+        if (auto* dp = processorRef.getDriveParameter())
+            faceplate.setDrive(dp->get());
+        if (auto* mp = processorRef.getMixParameter())
+        {
+            auto& mk = faceplate.getMixKnob();
+            mk.setValue(mp->get(), juce::dontSendNotification);
+        }
+        faceplate.setModified(processorRef.isDirty());
+    };
+
     setSize(960, 600);
     startTimerHz(30);
 }
@@ -166,6 +182,10 @@ void WonKnobberAudioProcessorEditor::timerCallback()
     // Reflect active slot (mostly driven by our strip clicks, but keeps indicator correct
     // after any processor-driven change).
     faceplate.setActiveSlot(processorRef.getActiveSlot());
+
+    // Light the "modified-from-preset" ember dot whenever the live state diverges from the loaded voice
+    // (manual knob edits, host automation, etc.). FaceplateView no-ops if the flag is unchanged.
+    faceplate.setModified(processorRef.isDirty());
 
     // Drain the audio-thread peak accumulators and feed them to the I/O meter
     // with a real elapsed-time delta so the hold/decay ballistics are frame-rate

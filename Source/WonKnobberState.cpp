@@ -17,6 +17,18 @@ static bool isKnownVariant(const juce::String& v)
     return stones.contains(v);
 }
 
+static bool isKnownCabIr(const juce::String& id)
+{
+    static const juce::StringArray ids{"FLAT", "STUDIO_RIBBON", "VINTAGE_4X12", "CONSOLE_BOX", "OLD_RADIO", "IRON_CORE"};
+    return ids.contains(id);
+}
+
+static bool isKnownNeural(const juce::String& id)
+{
+    static const juce::StringArray ids{"NONE", "TAPE", "VALVE", "TRANSISTOR", "IRON"};
+    return ids.contains(id);
+}
+
 static void sanitizeState(WonKnobberState& s)
 {
     auto sanitizeFloat = [](float& f, float def)
@@ -31,6 +43,11 @@ static void sanitizeState(WonKnobberState& s)
 
     if (s.variant.isEmpty() || !isKnownVariant(s.variant))
         s.variant = "diamond";
+
+    if (s.cabIr.isEmpty() || !isKnownCabIr(s.cabIr))
+        s.cabIr = "FLAT";
+    if (s.neuralModel.isEmpty() || !isKnownNeural(s.neuralModel))
+        s.neuralModel = "NONE";
 }
 } // namespace
 
@@ -42,6 +59,10 @@ juce::ValueTree WonKnobberState::toValueTree() const
     vt.setProperty("mix", mix, nullptr);
     vt.setProperty("variant", variant, nullptr);
     vt.setProperty("bypass", bypass, nullptr);
+    vt.setProperty("cabIr", cabIr, nullptr);
+    vt.setProperty("neuralModel", neuralModel, nullptr);
+    vt.setProperty("cabEngage", cabEngage, nullptr);
+    vt.setProperty("neuralEngage", neuralEngage, nullptr);
     return vt;
 }
 
@@ -79,6 +100,12 @@ WonKnobberState WonKnobberState::fromValueTree(const juce::ValueTree& v)
     s.variant = stateVT.getProperty("variant", "diamond").toString();
     s.bypass = (bool)stateVT.getProperty("bypass", false);
 
+    // Missing attrs (legacy + pre-cab/neural states) default to OFF via the struct defaults below.
+    s.cabIr = stateVT.getProperty("cabIr", "FLAT").toString();
+    s.neuralModel = stateVT.getProperty("neuralModel", "NONE").toString();
+    s.cabEngage = (bool)stateVT.getProperty("cabEngage", false);
+    s.neuralEngage = (bool)stateVT.getProperty("neuralEngage", false);
+
     sanitizeState(s);
 
     return s;
@@ -106,6 +133,8 @@ WonKnobberState WonKnobberState::fromLegacyV1Data(const void* data, int sizeInBy
         s.mix = 1.0f;
 
     s.bypass = false; // legacy pre-dates bypass field
+    // cab/neural also pre-date legacy states: struct defaults (FLAT/NONE, both disengaged) apply,
+    // so an upgraded old session keeps its exact pre-cab/neural audio.
 
     sanitizeState(s);
 
@@ -130,12 +159,17 @@ static bool runWonKnobberStateUnitTests()
         orig.mix = 0.87f;
         orig.variant = "ruby";
         orig.bypass = true;
+        orig.cabIr = "VINTAGE_4X12";
+        orig.neuralModel = "IRON";
+        orig.cabEngage = true;
+        orig.neuralEngage = true;
 
         auto vt = orig.toValueTree();
         auto back = WonKnobberState::fromValueTree(vt);
 
         bool ok = std::abs(back.drive - 0.42f) < 1e-6f && std::abs(back.mix - 0.87f) < 1e-6f &&
-                  back.variant == "ruby" && back.bypass == true;
+                  back.variant == "ruby" && back.bypass == true && back.cabIr == "VINTAGE_4X12" &&
+                  back.neuralModel == "IRON" && back.cabEngage == true && back.neuralEngage == true;
         std::cout << "WONSTATE UNIT [roundtrip nominal]: " << (ok ? "PASS" : "FAIL") << std::endl;
         if (!ok)
             pass = false;
@@ -148,8 +182,24 @@ static bool runWonKnobberStateUnitTests()
         // no drive/mix/variant/bypass
         auto back = WonKnobberState::fromValueTree(vt);
         bool ok = std::abs(back.drive - 0.5f) < 1e-6f && std::abs(back.mix - 1.0f) < 1e-6f &&
-                  back.variant == "diamond" && back.bypass == false;
+                  back.variant == "diamond" && back.bypass == false && back.cabIr == "FLAT" &&
+                  back.neuralModel == "NONE" && back.cabEngage == false && back.neuralEngage == false;
         std::cout << "WONSTATE UNIT [missing->defaults]: " << (ok ? "PASS" : "FAIL") << std::endl;
+        if (!ok)
+            pass = false;
+    }
+
+    // Unknown cab/neural ids -> safe defaults (FLAT / NONE); engage flags preserved.
+    {
+        WonKnobberState bad;
+        bad.cabIr = "NOT_A_CAB";
+        bad.neuralModel = "NOT_A_MODEL";
+        bad.cabEngage = true;
+        bad.neuralEngage = true;
+        auto back = WonKnobberState::fromValueTree(bad.toValueTree());
+        bool ok = back.cabIr == "FLAT" && back.neuralModel == "NONE" && back.cabEngage == true &&
+                  back.neuralEngage == true;
+        std::cout << "WONSTATE UNIT [unknown cab/neural->defaults]: " << (ok ? "PASS" : "FAIL") << std::endl;
         if (!ok)
             pass = false;
     }
