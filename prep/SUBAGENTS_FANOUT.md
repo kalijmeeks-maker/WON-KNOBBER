@@ -45,7 +45,7 @@ HEAD: 841ee03 (after all prep commits + SYNC ingest + API + rear embed)
 Sub-agents are autonomous; they will use their own tool calls (read, grep, etc.) to explore and write their reports here.
 
 ## Completion status (as of latest handoff ingest + prep actions)
-- explore (ID audit): succeeded; PREP_ID_AUDIT.md committed (mismatches table, load path, edit sites for ID sync).
+- explore (ID audit: 019e8cd2-8940-7030-a356-b224fe8d0aa3): succeeded (344.9s, 71 calls); PREP_ID_AUDIT.md committed (exhaustive table of ~100+ occurrences with abs paths:line, state-vs-display drift core finding, full load path trace matching spec, gaps list incl Trim/latency/stale, exact handoff edit list split Grok/CC, readiness 65/100 + recommendations). Subagent meta: tool_calls=71, turns=1.
 - plan (this one): succeeded (229s); PREP_INTEGRATION_PLAN.md committed + followed (added public setters as P4 quick-win in 76e8135; status + fanout updated).
 - won-qa: cancelled (doom loop); manual PREP_QA_REPORT.md produced + committed (Trim::no vs yes; missing PDC logic; other passes for RT-safe).
 - general (rear): succeeded; PREP_REAR_UI_READINESS.md committed + followed (added rear PNGs to CMake in 1437df5; public API; status updated).
