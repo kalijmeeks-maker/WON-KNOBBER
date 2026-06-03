@@ -259,12 +259,36 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
 {
     const auto pos = e.getPosition();
 
+    // Licences scroll sits ON TOP of the About card — handled first so it captures clicks while open.
+    // Its close affordance OR a click outside its panel dismisses it back to the About card.
+    if (licencesVisible)
+    {
+        const auto panel = computeLicencesPanelBounds();
+        const auto closeBox = juce::Rectangle<int>(panel.getRight() - 30, panel.getY() + 10, 20, 20);
+        if (closeBox.contains(pos) || !panel.contains(pos))
+        {
+            licencesVisible = false;
+            repaint();
+        }
+        return;
+    }
+
     // About modal is top-most + captures all clicks while open. Geometry is recomputed
     // deterministically (same source as drawAboutPanel) so hit-testing never depends on a paint.
     if (aboutVisible)
     {
         const auto panel = computeAboutPanelBounds();
         const auto closeBox = juce::Rectangle<int>(panel.getRight() - 26, panel.getY() + 8, 18, 18);
+
+        // "View full licences ▸" link → open the scrollable full-text licences modal.
+        if (computeLicencesLinkBounds().contains(pos))
+        {
+            licencesVisible = true;
+            licencesScrollY = 0;
+            repaint();
+            return;
+        }
+
         if (closeBox.contains(pos) || !panel.contains(pos))
         {
             aboutVisible = false;
@@ -487,6 +511,10 @@ void FaceplateView::paintOverChildren(juce::Graphics& g)
     // About modal sits above everything (including the dim veil).
     if (aboutVisible)
         drawAboutPanel(g);
+
+    // Full third-party licences scroll sits above the About card.
+    if (licencesVisible)
+        drawLicencesPanel(g);
 }
 
 void FaceplateView::drawBypassRocker(juce::Graphics& g)
@@ -614,8 +642,157 @@ void FaceplateView::drawAboutPanel(juce::Graphics& g)
     g.setFont(juce::Font(juce::FontOptions(12.0f)));
     g.drawMultiLineText(credit, line.getX(), line.getY() + 12, line.getWidth(), juce::Justification::topLeft);
 
-    // Single amber "View full licences" link → the full THIRD_PARTY_LICENSES.md scroll (scroll UI is future work).
+    // Single amber "View full licences" link → opens the full THIRD_PARTY_LICENSES.md scroll.
+    // The hit-target is computed deterministically via computeLicencesLinkBounds() (same geometry).
     g.setColour(juce::Colour(0xffffb74d));
     g.setFont(juce::Font(juce::FontOptions(12.0f).withStyle("Bold")));
-    g.drawText("View full licences " + arrow, line.removeFromBottom(20), juce::Justification::bottomLeft, false);
+    g.drawText("View full licences " + arrow, computeLicencesLinkBounds(), juce::Justification::bottomLeft, false);
+}
+
+juce::Rectangle<int> FaceplateView::computeLicencesLinkBounds() const
+{
+    // Mirrors the bottom strip used by drawAboutPanel: inner = panel.reduced(24), and the link
+    // occupies the bottom 20px of that inner rect (only vertical removeFrom* mutate `line`, so the
+    // horizontal extent stays equal to inner's). Recomputed deterministically — never paint-dependent.
+    const auto inner = computeAboutPanelBounds().reduced(24);
+    return juce::Rectangle<int>(inner.getX(), inner.getBottom() - 20, inner.getWidth(), 20);
+}
+
+juce::Rectangle<int> FaceplateView::computeLicencesPanelBounds() const
+{
+    // Wider + taller than the About card so the full MIT text has room before it scrolls.
+    const int w = juce::jmin(680, getWidth() - 40);  // ~70% of the 960 face
+    const int h = juce::jmin(480, getHeight() - 50);
+    return juce::Rectangle<int>(0, 0, juce::jmax(140, w), juce::jmax(160, h)).withCentre(getLocalBounds().getCentre());
+}
+
+void FaceplateView::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
+{
+    if (licencesVisible)
+    {
+        // Scroll the licence body; deltaY > 0 means wheel-up (content moves down → reduce offset).
+        const int step = juce::roundToInt(wheel.deltaY * -120.0f);
+        licencesScrollY = juce::jlimit(0, licencesMaxScrollY, licencesScrollY + step);
+        repaint();
+        return;
+    }
+
+    juce::Component::mouseWheelMove(e, wheel);
+}
+
+void FaceplateView::drawLicencesPanel(juce::Graphics& g)
+{
+    // Scrim behind the licences modal (a touch darker than the About scrim since it layers on top).
+    g.setColour(juce::Colours::black.withAlpha(0.72f));
+    g.fillRect(getLocalBounds());
+
+    const auto panel = computeLicencesPanelBounds();
+    const auto pf = panel.toFloat();
+    g.setColour(juce::Colour(0xff131417));
+    g.fillRoundedRectangle(pf, 8.0f);
+    g.setColour(juce::Colour(0xffaa5500).withAlpha(0.6f)); // amber accent edge
+    g.drawRoundedRectangle(pf.reduced(0.5f), 8.0f, 1.2f);
+
+    // Title.
+    auto header = panel.reduced(24, 18);
+    auto titleRow = header.removeFromTop(28);
+    g.setColour(juce::Colour(0xfff0ede4));
+    g.setFont(juce::Font(juce::FontOptions(20.0f).withStyle("Bold")));
+    g.drawText("Third-party licences", titleRow, juce::Justification::topLeft, false);
+
+    // Close box (top-right) — geometry mirrors mouseDown's hit-test exactly.
+    const auto closeBox = juce::Rectangle<int>(panel.getRight() - 30, panel.getY() + 10, 20, 20);
+    g.setColour(juce::Colour(0xff9aa0a3));
+    g.setFont(juce::Font(juce::FontOptions(18.0f).withStyle("Bold")));
+    g.drawText(juce::String(juce::CharPointer_UTF8("\xc3\x97")), closeBox, juce::Justification::centred, false); // ×
+
+    // Hairline rule under the title.
+    header.removeFromTop(8);
+    g.setColour(juce::Colour(0xff3a3d3e));
+    g.drawLine((float)header.getX(), (float)header.getY(), (float)header.getRight(), (float)header.getY(), 1.0f);
+    header.removeFromTop(10);
+
+    // Scrollable body region: clip to it, then draw the (offset) full licence text.
+    const auto body = header;
+    const float bodyFont = 12.0f;
+    const float lineH = bodyFont * 1.4f;
+
+    // Full Airwindows MIT licence, verbatim from THIRD_PARTY_LICENSES.md, plus the per-asset note.
+    const juce::String licenceBody = getLicencesBodyText();
+
+    // Word-wrap the body to the body width so we can measure its true rendered height for clamping.
+    juce::GlyphArrangement glyphs;
+    glyphs.addJustifiedText(juce::Font(juce::FontOptions(bodyFont)), licenceBody, (float)body.getX(),
+                            (float)body.getY() + bodyFont, (float)body.getWidth(), juce::Justification::topLeft);
+    const float textBottom = glyphs.getBoundingBox(0, -1, true).getBottom();
+    const int contentH = juce::jmax(0, juce::roundToInt(textBottom - (float)body.getY()) + juce::roundToInt(lineH));
+
+    licencesMaxScrollY = juce::jmax(0, contentH - body.getHeight());
+    licencesScrollY = juce::jlimit(0, licencesMaxScrollY, licencesScrollY);
+
+    {
+        juce::Graphics::ScopedSaveState clip(g);
+        g.reduceClipRegion(body);
+        g.setColour(juce::Colour(0xffc9c6be));
+        g.setFont(juce::Font(juce::FontOptions(bodyFont)));
+        g.drawMultiLineText(licenceBody, body.getX(), body.getY() + juce::roundToInt(bodyFont) - licencesScrollY,
+                            body.getWidth(), juce::Justification::topLeft);
+    }
+
+    // Scroll affordance: a slim track + thumb on the right edge when the content overflows.
+    if (licencesMaxScrollY > 0)
+    {
+        const int trackW = 4;
+        const auto track = juce::Rectangle<int>(body.getRight() - trackW, body.getY(), trackW, body.getHeight());
+        g.setColour(juce::Colour(0xff2a2c2e));
+        g.fillRoundedRectangle(track.toFloat(), 2.0f);
+
+        const float frac = (float)body.getHeight() / (float)(body.getHeight() + licencesMaxScrollY);
+        const int thumbH = juce::jmax(24, juce::roundToInt((float)body.getHeight() * frac));
+        const float scrolled = (float)licencesScrollY / (float)licencesMaxScrollY;
+        const int thumbY = body.getY() + juce::roundToInt(scrolled * (float)(body.getHeight() - thumbH));
+        g.setColour(juce::Colour(0xff9aa0a3).withAlpha(0.85f));
+        g.fillRoundedRectangle(juce::Rectangle<int>(track.getX(), thumbY, trackW, thumbH).toFloat(), 2.0f);
+    }
+}
+
+juce::String FaceplateView::getLicencesBodyText() const
+{
+    // Hardcoded static text (matches how drawAboutPanel builds its credit block). The MIT licence
+    // below is copied VERBATIM from THIRD_PARTY_LICENSES.md; do not paraphrase. The trailing note
+    // covers per-IR / per-model notices, which are appended as those assets ship.
+    juce::String t;
+    t << "Airwindows (saturation algorithms)\n"
+      << "\n"
+      << "The saturation transfer functions in Source/dsp/AirwindowsShapers.h\n"
+      << "(Density3, Mojo, Spiral2 presence, PurestSaturation) are derived from Airwindows.\n"
+      << "\n"
+      << "Source: https://github.com/airwindows/airwindows\n"
+      << "Copyright (c) 2018 Chris Johnson\n"
+      << "License: MIT\n"
+      << "\n"
+      << "MIT License\n"
+      << "\n"
+      << "Copyright (c) 2018 Chris Johnson\n"
+      << "\n"
+      << "Permission is hereby granted, free of charge, to any person obtaining a copy\n"
+      << "of this software and associated documentation files (the \"Software\"), to deal\n"
+      << "in the Software without restriction, including without limitation the rights\n"
+      << "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
+      << "copies of the Software, and to permit persons to whom the Software is\n"
+      << "furnished to do so, subject to the following conditions:\n"
+      << "\n"
+      << "The above copyright notice and this permission notice shall be included in all\n"
+      << "copies or substantial portions of the Software.\n"
+      << "\n"
+      << "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+      << "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
+      << "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
+      << "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+      << "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+      << "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
+      << "SOFTWARE.\n"
+      << "\n"
+      << "Per-IR and per-model notices are added here as those assets ship.";
+    return t;
 }
