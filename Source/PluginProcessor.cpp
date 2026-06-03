@@ -34,6 +34,9 @@ void WonKnobberAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBl
     if (cabEngage)
         convolution.setIr(currentCabIr); // re-apply IR for the (possibly new) sample rate
     neuralModel.prepare(sampleRate, samplesPerBlock);
+    neuralModel.setEngaged(neuralEngage);
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
 
     // Size dry scratch defensively (prepare block can be smaller than later processBlock blocks in some hosts/offline).
     // 16384 covers offline render block sizes some hosts use (Logic/Reaper can push past 4k); cheap prealloc.
@@ -114,7 +117,7 @@ void WonKnobberAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, ju
 
     saturation.process(buffer);
     convolution.process(buffer);
-    // neuralModel.process (buffer); // enabled once a model is loaded
+    neuralModel.process(buffer); // gated internally: passthrough unless neuralEngage + a model is loaded
 
     // Equal-power dry/wet after the full chain. Uses processor's mixSmooth (advances per sample).
     dryWet.applyCrossfade(mixSmooth, buffer, dryBuffer);
@@ -168,6 +171,12 @@ void WonKnobberAudioProcessor::applyStateToParams(const WonKnobberState& st) noe
     convolution.setEngaged(cabEngage);
     if (cabEngage)
         convolution.setIr(currentCabIr);
+
+    // Reflect neural selection into the RTNeural stage (message thread). Engage gate is atomic;
+    // the model is built + atomically swapped in by NeuralModel. Off by default until a voice engages it.
+    neuralModel.setEngaged(neuralEngage);
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
 }
 
 void WonKnobberAudioProcessor::applyState(const WonKnobberState& st) noexcept
