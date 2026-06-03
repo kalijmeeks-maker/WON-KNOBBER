@@ -321,6 +321,17 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
         return;
     }
 
+    // Preset name LED click (menu), but only if not hitting the chevrons or modified dot inside the strip.
+    if (presetNameBounds.contains(pos) &&
+        !chevLeftBounds.contains(pos) &&
+        !chevRightBounds.contains(pos) &&
+        !modifiedDotBounds.contains(pos))
+    {
+        if (onPresetMenuRequested)
+            onPresetMenuRequested();
+        return;
+    }
+
     if (chevLeftBounds.contains(pos))
     {
         cyclePreset(-1);
@@ -405,6 +416,16 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
         g.setFont(juce::Font(juce::FontOptions(fontH).withStyle("Bold")));
         const juce::String disp = currentPresetName.toUpperCase();
         g.drawText(disp, presetNameBounds, juce::Justification::centred, false);
+
+        // Tiny ▾ caret to the right of the name to signal "click for menu" (per spec).
+        if (!presetNameBounds.isEmpty())
+        {
+            const float caretH = fontH * 0.6f;
+            const auto caretR = presetNameBounds.toFloat().withLeft(presetNameBounds.getRight() - caretH * 1.2f).withWidth(caretH);
+            g.setColour(juce::Colour(0xffc9c6be).withAlpha(0.7f));
+            g.setFont(juce::Font(juce::FontOptions(caretH * 0.9f)));
+            g.drawText(juce::String(juce::CharPointer_UTF8("\xe2\x96\xbe")), caretR, juce::Justification::centred, false);
+        }
     }
 
     // "Modified-from-preset" ember dot (Design spec) — shown only when the live cab/neural identity
