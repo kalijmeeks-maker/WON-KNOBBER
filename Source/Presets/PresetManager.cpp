@@ -102,7 +102,9 @@ bool PresetManager::deletePreset(int index)
     if (index < 0 || index >= presetFiles.size())
         return false;
 
-    const bool ok = presetFiles[index].deleteFile();
+    // Move to the OS trash (recoverable) rather than a permanent unlink — matches the header
+    // contract and gives the user a safety net behind the editor's delete-confirm dialog.
+    const bool ok = presetFiles[index].moveToTrash();
     refresh();
     return ok;
 }
@@ -123,8 +125,11 @@ juce::String PresetManager::sanitizeName(const juce::String& raw)
 }
 
 //==============================================================================
-// Self-tests (run at static init / dlopen, mirroring WonKnobberState + preset-transport style).
+// Self-tests — DEBUG builds only. They do disk I/O at static init / dlopen, and the [delete] case
+// now exercises moveToTrash(), so running them in a shipping plugin would litter the user's Trash on
+// every load. Gated behind JUCE_DEBUG; run a Debug build to see the PRESETMGR PASS lines.
 // Uses a unique temp directory and cleans up after itself so the real user bank is never touched.
+#if JUCE_DEBUG
 namespace
 {
 static bool runPresetManagerTests()
@@ -225,3 +230,4 @@ static bool runPresetManagerTests()
 
 static const bool presetManagerTestsRan = runPresetManagerTests();
 } // namespace
+#endif // JUCE_DEBUG
