@@ -532,6 +532,8 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 // Self-tests for Phase 2b preset strip + transport API (run at static init / dlopen of plugin).
 // Mirrors the style + visibility of WonKnobberState unit tests. Exercises factory load, A/B
 // save-on-switch, copy, transport save/load/undo/randomize. Output on stdout for build/qa logs.
+// Gated behind JUCE_DEBUG for consistency (no litter in Release loads).
+#if JUCE_DEBUG
 namespace
 {
 static bool runPresetTransportAPITests()
@@ -689,3 +691,4 @@ static bool runPresetTransportAPITests()
 
 static const bool presetAPITestsRan = runPresetTransportAPITests();
 } // namespace
+#endif // JUCE_DEBUG
