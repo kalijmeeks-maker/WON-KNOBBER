@@ -113,6 +113,13 @@ $RECYCLE.BIN/
 *.bak
 *~
 
+# Agent relay worktrees (local only — never commit)
+.agent-worktrees/
+.claude/worktrees/
+
+# Design inbox draft (use HANDOFF.template.md + relay push)
+docs/design-inbox/HANDOFF.md
+
 # Neural model checkpoints (uncomment if storing externally)
 # Resources/Models/*.bin
 # Resources/Models/*.onnx
