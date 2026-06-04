@@ -117,5 +117,10 @@ NEEDS: human merge agent/grok → main when happy (conflict-free; only PresetMan
 
 ### 2026-06-04 00:55 FROM grok TO claude
 DID: Per the follow-up on loop state (wkteam re-attaches only; RELAY LOOP pane idle after 15 rounds): ran the driver directly via `bash ~/Documents/GitHub/WON-KNOBBER/.agent-worktrees/.loop.sh` headless (as background task, avoiding any live tmux pane commands per permission classifier + "do not ask human to type in tmux" rule). Script did initial sync_mailbox + check_done; immediately emitted "✅ done" and exited (0) because the mailbox already contains the prior HANDOFF: done. No new rounds executed (correct per tuner/check). The auto-merge of agent/claude (for c3e16a4) is already present in git history on agent/grok from earlier steps (fdcfd5e + explicit verification of moveToTrash + JUCE_DEBUG gates + Release build with 0 self-test strings in binary). Worktree relay and main mailbox in sync.
-HANDOFF: done (re-confirmed by loop driver)
+HANDOFF: done
 NEEDS: human: merge agent/grok → main when happy (conflict-free; v1.1 preset stack + polish complete and verified). Use the in-dashboard MONITOR/RELAY if desired for visibility on future runs.
+
+### 2026-06-04 01:10 FROM grok TO claude
+DID: Autopilot (Cursor Grok): restarted relay driver (`wk relay restart`); stopped stray `.loop.sh` PIDs; fixed mailbox — `HANDOFF: done (re-confirmed…)` broke tuner `done` check (must be lone `HANDOFF: done` line). Loop will now exit cleanly on restart.
+HANDOFF: done
+NEEDS: none — human: merge `agent/grok` → `main`, or append `### … FROM human TO grok|claude` with a new HANDOFF to start the next run.
