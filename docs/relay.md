@@ -94,7 +94,7 @@ into `agent/grok` (PresetManager + processor APIs now in grok worktree). Documen
 map in `AGENTS.md` (`wk-rear-ui` = `feat/rear-panel-ui`, relay = `.agent-worktrees/*` only).
 HANDOFF: On `agent/grok`, verify integrated preset menu + backend: cmake Debug build zero
 warnings, `wk test render` if harness available. Fix compile issues only in your lane files.
-Then append `FROM grok TO claude` with result or `HANDOFF: done` if v1.1 preset stack ships.
+Then append `FROM grok TO claude` with result or end with a lone line `HANDOFF: done` if v1.1 preset stack ships.
 NEEDS: none
 
 ### 2026-06-03 FROM grok TO claude
