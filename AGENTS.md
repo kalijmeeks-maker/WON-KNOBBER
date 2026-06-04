@@ -53,16 +53,20 @@ NEEDS: none
 - Wire UI to processor via editor callbacks only
 - GUI verify: `wk test render` then `wk pin flip` / `wk drive` (not full Ableton every turn)
 
-### CLAUDE DESIGN — browser only (async; not in `wkteam`)
+### CLAUDE DESIGN — browser (Playwright + relay; not in `wkteam` tmux)
 
-Claude Design does **not** run in tmux. Deliverables go to git; handoff goes through **`docs/design-inbox/`**:
+Design is **not** a `claude -p` pane. Automation uses **Playwright** (real chat typing):
 
-1. `wk design open` — browser session  
-2. Commit assets (`Resources/`, `docs/…`)  
-3. `wk design new` → edit `docs/design-inbox/HANDOFF.md`  
-4. `wk design push` — appends **`FROM design TO claude|grok`** to `docs/relay.md`  
+| Command | Action |
+|---------|--------|
+| `wk design login` | One-time: save logged-in Chromium profile |
+| `wk design send "…"` | Type prompt in Design chat + wait |
+| `wk design auto` | Send `PROMPT:` from `docs/design-inbox/HANDOFF.md` |
+| `wk design push` | Append **`FROM design TO …`** to `docs/relay.md` |
 
-Code/Grok implement; bring `wk test render` output back for Design pixel-check. See `docs/design-inbox/README.md`.
+Profile: `~/.config/wk-team/design-browser-profile`. Then `wkteam` picks up relay blocks.
+
+Code/Grok implement; `wk test render` for pixel-check. See `docs/design-inbox/README.md`.
 
 ## Shared seam (propose in relay before changing)
 

@@ -5,18 +5,26 @@ This folder is the handoff dock between Design and Claude/Grok.
 
 ## Workflow
 
-1. Work in **Claude Design** (browser): `wk design open`  
-   (WON-KNOBBER project: faceplate background in [Claude Design](https://claude.ai/design/p/1530ffb6-6fcb-48a7-994b-a8f17675fa90?file=exports%2Ffaceplate-pro-background-960x612.png) — stored in `~/.config/wk-team/config.json` as `design_url`).
-2. Save deliverables into the repo (`Resources/`, `docs/design-handoff-*.md`, etc.) and commit.
-3. Fill in **`HANDOFF.md`** in this folder (copy from `HANDOFF.template.md`).
-4. Run:
+### One-time setup
 
 ```bash
-wk design push
+wk design login    # Chromium opens — log in to Claude, open your Design project, press ENTER in Terminal
+wk design check    # confirms the chat box is reachable
 ```
 
-That appends a `FROM design TO …` block to `docs/relay.md` and syncs worktrees.
-Then `wkteam` (or an already-running relay) picks it up — **no copy-paste** between chats.
+### Autonomous (Playwright types in the real Design chat)
+
+1. `wk design new` → edit **`HANDOFF.md`** (`PROMPT:`, `TO:`, `DID:`, `HANDOFF:`).
+2. `wk design auto` — reads **`PROMPT:`**, types into Claude Design, waits, saves screenshot to this folder.
+3. Export/download assets from the browser, commit paths under `Resources/`.
+4. Fill **`DID:`** / **`HANDOFF:`** in `HANDOFF.md`.
+5. `wk design push` (or `wk design auto --push`) → `docs/relay.md` → `wkteam`.
+
+Project URL: [Claude Design faceplate](https://claude.ai/design/p/1530ffb6-6fcb-48a7-994b-a8f17675fa90?file=exports%2Ffaceplate-pro-background-960x612.png) in `~/.config/wk-team/config.json`.
+
+### Manual (no automation)
+
+`wk design open` → work in Safari/Chrome → commit → `wk design push`.
 
 ## Files
 
