@@ -117,6 +117,10 @@ $RECYCLE.BIN/
 .agent-worktrees/
 .claude/worktrees/
 
+# Python
+__pycache__/
+*.pyc
+
 # Design inbox draft (use HANDOFF.template.md + relay push)
 docs/design-inbox/HANDOFF.md
 
