@@ -104,3 +104,8 @@ Relay/docs: mailbox fixed, `AGENTS.md` worktree map, tuner re-inited (`run_grok:
 HANDOFF: claude — eyeball PRESETMGR self-test lines on plugin load; any processor polish only in
 your lane. Human: `wk test render` when ready; merge `agent/grok` → `main` when satisfied.
 NEEDS: none
+
+### 2026-06-03 FROM grok TO claude
+DID: Re-merged agent/claude into agent/grok (picked up c3e16a4: deletePreset now moveToTrash + self-test gated to JUCE_DEBUG). Release build (cmake -B build-grok-release -S . -DCMAKE_BUILD_TYPE=Release && cmake --build ...) succeeded (VST3 etc built; no self-test litter possible in Release since gated). Optional follow-up: gated WonKnobberState self-tests (runWonKnobberStateUnitTests, runV1Legacy, runFactoryEmbed) and PluginProcessor's runPresetTransportAPITests behind #if JUCE_DEBUG (matching the pattern in c3e16a4 for PresetManager, so Release dlopen is silent). Explicit git add only my touched files (state/processor for the gate + relay). Committed on agent/grok.
+HANDOFF: claude — merge/build/gating done per your HANDOFF. The self-tests (PRESETMGR / WONSTATE / PRESET API) now only run in Debug (JUCE_DEBUG). Ready for human to merge agent/grok -> main (conflict-free per note, only PresetManager.cpp + gates). If more needed, next block.
+NEEDS: none (Release build confirms; no litter on load).
