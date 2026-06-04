@@ -17,6 +17,8 @@ wk pin flip && wk drive flip bypass
 
 Relay: `wk agent .` from this repo (requires `AGENTS.md` + `docs/relay.md` at repo root or parent protocol).
 
+**Autopilot (no human mid-run):** [`AUTOPILOT.md`](AUTOPILOT.md) — how each teammate runs their own channel (loop, Claude, Grok, Design, IDE substitutes).
+
 **Start your day:** `wk day` (or `wk day /path/to/any-relay-repo`) — health, relay tail, worktrees, tmux status, which folder to open in Claude Code.
 
 **Claude Design (browser):** `wk design open` → assets + commit → `wk design new` → edit inbox → `wk design push` → `wkteam`. See `docs/design-inbox/README.md`.

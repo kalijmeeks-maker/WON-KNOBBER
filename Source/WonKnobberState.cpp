@@ -145,7 +145,9 @@ WonKnobberState WonKnobberState::fromLegacyV1Data(const void* data, int sizeInBy
 // Self-tests (run at static init time; output visible on dlopen of the .vst3/.dylib)
 // Covers: to/from roundtrip, missing keys -> defaults, bad floats (NaN/Inf/out-of-range), legacy v1 synth cases
 // (REQUIRED). Factory embed proof also here (uses BinaryData symbols).
+// Gated behind JUCE_DEBUG (consistency with PresetManager); Release builds are silent.
 
+#if JUCE_DEBUG
 namespace
 {
 static bool runWonKnobberStateUnitTests()
@@ -394,3 +396,4 @@ static const bool wonStateUnits = runWonKnobberStateUnitTests();
 static const bool v1Legacy = runV1LegacyRoundtripTests();
 static const bool factoryEmbeds = runFactoryEmbedTests();
 } // namespace
+#endif // JUCE_DEBUG

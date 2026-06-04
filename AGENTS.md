@@ -2,6 +2,8 @@
 
 Two agents collaborate via **`docs/relay.md`**. Human starts the loop (`wkteam`); then **no copy-paste**.
 
+**Autopilot playbook (every teammate):** [`docs/AUTOPILOT.md`](docs/AUTOPILOT.md) — loop driver, `claude -p`, `grok -p`, Cursor substitutes, Design (`wk design`), human seed/merge, tuner rules.
+
 ## Human / tmux (read this — not a chat UI)
 
 | tmux pane | Agent use |

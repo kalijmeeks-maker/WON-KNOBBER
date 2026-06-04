@@ -3,6 +3,8 @@
 Claude Design runs in the **browser only** — it is not in the `wkteam` tmux loop.
 This folder is the handoff dock between Design and Claude/Grok.
 
+Team autopilot channels (all roles): [`../AUTOPILOT.md`](../AUTOPILOT.md).
+
 ## Workflow
 
 ### One-time setup

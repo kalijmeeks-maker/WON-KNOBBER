@@ -75,6 +75,7 @@ public:
     std::function<void(char)> onActiveSlotSelected;             // 'A' or 'B'
     std::function<void(const juce::String&)> onTransportAction; // "save", "load", "undo", "randomize"
     std::function<void()> onRevertToPreset;                     // fired by clicking the "modified" ember dot
+    std::function<void()> onPresetMenuRequested;                // fired by clicking the preset name LED (not chevrons/dot)
 
     // Called by editor after preset load / slot switch / state recall to keep display in sync.
     void setPresetDisplayName(const juce::String& name);
@@ -86,6 +87,8 @@ public:
 
     // Editor sets this from the processor so the ‹ › chevrons wrap over the real bank size.
     void setNumFactoryPresets(int n) { numFactoryPresets = juce::jmax(1, n); }
+
+    juce::String getPresetDisplayName() const { return currentPresetName; }
 
     // Bypass rocker: editor wires this to the processor; arg = new bypass state (true = bypassed).
     std::function<void(bool)> onBypassToggled;
