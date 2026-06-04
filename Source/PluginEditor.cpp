@@ -249,29 +249,29 @@ void WonKnobberAudioProcessorEditor::handlePresetMenuResult(int r)
     else if (r == 2001)
     {
         // Save As…
+        const juce::String nameDefault = faceplate.getPresetDisplayName();  // local fetch inside handle (like delete's cur); fixes undeclared currentDisp (was showPresetMenu local)
         juce::AlertWindow aw("Save Preset", "Preset name:", juce::AlertWindow::QuestionIcon);
-        aw.addTextEditor("name", currentDisp, "Name:");  // use current for default (was hard "My Preset")
+        aw.addTextEditor("name", nameDefault, "Name:");  // use current for default (was hard "My Preset")
         aw.addButton("OK", 1);
         aw.addButton("Cancel", 0);
         // Capture TextEditor* before enterModalState (avoids fragile getCurrentlyModalComponent + global state in async callback).
-        if (auto* nameEd = aw.getTextEditor("name"))
+        // enterModalState unconditional after setup (so dialog always shows; capture nameEd without conditioning the show).
+        auto* nameEd = aw.getTextEditor("name");
+        aw.enterModalState(true, juce::ModalCallbackFunction::create([this, nameEd](int result)
         {
-            aw.enterModalState(true, juce::ModalCallbackFunction::create([this, nameEd](int result)
+            if (result == 0) return;
+            if (!nameEd) return;
+            auto n = nameEd->getText();
+            if (n.isEmpty()) return;
+            if (processorRef.saveUserPreset(n))
             {
-                if (result == 0) return;
-                if (!nameEd) return;
-                auto n = nameEd->getText();
-                if (n.isEmpty()) return;
-                if (processorRef.saveUserPreset(n))
-                {
-                    // Use PresetManager::sanitizeName (visible via Processor.h include) to match bank name exactly.
-                    // Removes prior local ad-hoc duplication + edge divergence (whitespace, ext, fallback "Untitled").
-                    juce::String s = PresetManager::sanitizeName(n);
-                    faceplate.setPresetDisplayName(s);
-                    applyLoadedStateToGui();
-                }
-            }));
-        }
+                // Use PresetManager::sanitizeName (visible via Processor.h include) to match bank name exactly.
+                // Removes prior local ad-hoc duplication + edge divergence (whitespace, ext, fallback "Untitled").
+                juce::String s = PresetManager::sanitizeName(n);
+                faceplate.setPresetDisplayName(s);
+                applyLoadedStateToGui();
+            }
+        }));
     }
     else if (r == 2002)
     {
@@ -282,16 +282,22 @@ void WonKnobberAudioProcessorEditor::handlePresetMenuResult(int r)
         {
             juce::AlertWindow::showOkCancelBox(juce::AlertWindow::QuestionIcon, "Delete Preset",
                 juce::String("Delete \"") + cur + "\"?", "Delete", "Cancel", this,
-                juce::ModalCallbackFunction::create([this, idx, cur](int res)
+                juce::ModalCallbackFunction::create([this, cur](int res)  // do not capture stale idx; always resolve fresh inside cb
                 {
                     if (res == 0) return;
-                    // Re-validate idx still valid (defensive); delete moves to trash (c3e16a4).
-                    if (processorRef.findUserPresetIndex(cur) >= 0)
-                        processorRef.deleteUserPreset(idx);
+                    // Fresh resolve inside cb (re-find by current display name) so delete uses post-capture state if any race.
+                    const int freshIdx = processorRef.findUserPresetIndex(cur);
+                    if (freshIdx >= 0)
+                        processorRef.deleteUserPreset(freshIdx);
                     applyLoadedStateToGui();
-                    // Fix stale display name post-delete: snap to first factory (valid name). User can cycle/load next.
+                    // Fix stale + name-vs-state mismatch: load factory[0] so display name + loadedVoice + isDirty + slots all consistent (reuses existing factory load path + apply).
                     if (processorRef.getNumFactoryPresets() > 0)
+                    {
+                        processorRef.loadFactoryPreset(0);
+                        applyLoadedStateToGui();
                         faceplate.setPresetDisplayName(processorRef.getFactoryPresetName(0));
+                        faceplate.setActiveSlot(processorRef.getActiveSlot());
+                    }
                 }));
         }
     }

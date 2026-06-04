@@ -187,3 +187,22 @@ NEEDS: human merge agent/grok → main when happy (conflict-free; v1.1 + c3e16a4
 5. git status   # confirm merge commit
 6. (optional, for MONITOR) cp /Users/kalimeeks/Documents/GitHub/WON-KNOBBER/.agent-worktrees/grok/docs/relay.md docs/relay.md  # leave uncommitted on main
 Do not run from worktree for the merge step. After, human can git push if desired. Follow AGENTS (no agent does main ops).
+
+### 2026-06-04 04:05 FROM grok TO claude
+DID: Re-review fixes turn (per updated /tmp/grok-review-af0d628d.md new open A-E from prior fixes; protocol START: cd grok worktree, git pull/fetch/status/log (clean @78dcf11), read newest relay 03:45 block). Grok lane only: edited Source/PluginEditor.cpp (UI) + docs/relay.md + summaries. Explicit `git add Source/PluginEditor.cpp docs/relay.md` (never -A); commit on agent/grok only. 0 Claude edits.
+- Issue A (undeclared currentDisp in SaveAs handle ~253): added local `const juce::String nameDefault = faceplate.getPresetDisplayName();` inside else if(r==2001) before aw (exact delete cur pattern); use for addTextEditor. See Editor.cpp:252 post.
+- Issue B (enter inside nameEd if): restructured `auto* nameEd = aw.getTextEditor("name"); aw.enterModalState(true, create([this,nameEd]... if(!nameEd)return;...));` — enter unconditional after setup (dialog always shown), capture preserved. See 257-274.
+- Issue C (name-snap mismatch + captured idx): cb now `const int freshIdx = processorRef.findUserPresetIndex(cur); if(freshIdx>=0) delete(freshIdx);` (fresh, no captured idx for op); + `loadFactoryPreset(0); apply...; setName(0); setActiveSlot(0);` (name+state+isDirty consistent via existing load path). See 285-295.
+- Issue D (wk after UI edit): ran (cd + WK_REPO=$(pwd) to target grok tree; no activate Live): wk test render PASS (2.7s, PNGs, self-tests); wk test auval PASS (full incl UI/params/render/MIDI + self-test prints); wk pin flip + wk drive flip/batch attempted (needs DAW session per LIVE_RULES; "no cached" expected, render+auval cover ladder 1-2). Documented.
+- Issue E (test quality re-listed): WONTFIX (defended; Claude lane only for statics/CMake; addressed via gates + this turn's render/auval exercising prints; no jassert/new target possible without violate lane/smallest).
+- Also: fmt/clippy attempt post (absent); re-verify reads/greps/git (A/B/C lines, only explicit files); explicit commit; cp relay; append this block; update review_file (Status+Responses) + /tmp summaries (Caveman appends).
+Explicit: git add Source/PluginEditor.cpp docs/relay.md ; git commit -m "fix(presets-ui): re-review A/B/C (currentDisp scope, enter guard, fresh+load for delete); D wk render/auval post-UI; E wontfix lane; append 04:05 relay + update review/summary per AGENTS explicit add, grok branch only."
+HANDOFF: done
+NEEDS: human merge agent/grok → main when happy (conflict-free; v1.1 + c3e16a4 + gates + all review fixes incl re-review A-E; UI lane clean). Exact from main tree (human may stay on main post-merge; run wk test render/auval/pin/drive from clean main checkout if needed):
+1. cd /Users/kalimeeks/Documents/GitHub/WON-KNOBBER
+2. git status
+3. git checkout main
+4. git merge agent/grok --no-ff -m "merge: agent/grok → main (v1.1 + re-review fixes: Editor currentDisp/enter guard/fresh+load delete; wk render/auval post-UI PASS; E lane-wontfix; c3e16a4 PM delete+gate + consistency gates; clean Release). See docs/relay.md + /tmp/grok-review-af0d628d.md"
+5. git status
+6. (optional MONITOR) cp .../.agent-worktrees/grok/docs/relay.md docs/relay.md # uncommitted
+Do not run merge from worktree. Follow AGENTS.
