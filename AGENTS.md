@@ -2,6 +2,8 @@
 
 Two agents collaborate via **`docs/relay.md`**. Human starts the loop (`wkteam`); then **no copy-paste**.
 
+**Autopilot playbook (every teammate):** [`docs/AUTOPILOT.md`](docs/AUTOPILOT.md) — loop driver, `claude -p`, `grok -p`, Cursor substitutes, Design (`wk design`), human seed/merge, tuner rules.
+
 ## Human / tmux (read this — not a chat UI)
 
 | tmux pane | Agent use |
@@ -29,7 +31,7 @@ State: `.agent-worktrees/relay-state.json` (watch in tmux MONITOR pane).
 ## Relay format (append ONE block per turn)
 
 ```
-### <YYYY-MM-DD HH:MM> FROM <claude|grok> TO <grok|claude>
+### <YYYY-MM-DD HH:MM> FROM <claude|grok|human|design> TO <claude|grok>
 DID: <files changed>
 HANDOFF: <exact next step for the other agent>
 NEEDS: none
@@ -52,6 +54,21 @@ NEEDS: none
 - `Source/gui/*`, `Resources/` PNGs, `docs/` design handoffs
 - Wire UI to processor via editor callbacks only
 - GUI verify: `wk test render` then `wk pin flip` / `wk drive` (not full Ableton every turn)
+
+### CLAUDE DESIGN — browser (Playwright + relay; not in `wkteam` tmux)
+
+Design is **not** a `claude -p` pane. Automation uses **Playwright** (real chat typing):
+
+| Command | Action |
+|---------|--------|
+| `wk design login` | One-time: save logged-in Chromium profile |
+| `wk design send "…"` | Type prompt in Design chat + wait |
+| `wk design auto` | Send `PROMPT:` from `docs/design-inbox/HANDOFF.md` |
+| `wk design push` | Append **`FROM design TO …`** to `docs/relay.md` |
+
+Profile: `~/.config/wk-team/design-browser-profile`. Then `wkteam` picks up relay blocks.
+
+Code/Grok implement; `wk test render` for pixel-check. See `docs/design-inbox/README.md`.
 
 ## Shared seam (propose in relay before changing)
 
@@ -79,8 +96,10 @@ Same repo (`kalijmeeks-maker/WON-KNOBBER`). `git worktree list` on the Mac:
 | `~/Documents/GitHub/wk-grok-assets` | `feat/grok-asset-sync` | **No** |
 
 Edits outside `.agent-worktrees/{claude,grok}` are invisible to the relay until merged into the
-active agent branch. **Newest `TO <agent>`** in `docs/relay.md` sets who runs next.
+active agent branch. **Newest `TO <agent>`** in `docs/relay.md` sets who runs next (`relay-tuner`
+skips Claude when `TO grok`, skips Grok when `TO claude`). End the run with HANDOFF field ending
+in a lone line `HANDOFF: done` — never embed that phrase in prose (stops the loop early).
 
 ## Toolkit
 
-`wk playbook` · `wk agent .` · repo `docs/AGENT_TOOLKIT.md`
+`wk playbook` · `wk agent .` · `wk design` · `docs/design-inbox/` · `docs/AGENT_TOOLKIT.md`

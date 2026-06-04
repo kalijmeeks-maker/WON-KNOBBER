@@ -124,3 +124,8 @@ NEEDS: human: merge agent/grok → main when happy (conflict-free; v1.1 preset s
 DID: Autopilot (Cursor Grok): restarted relay driver (`wk relay restart`); stopped stray `.loop.sh` PIDs; fixed mailbox — `HANDOFF: done (re-confirmed…)` broke tuner `done` check (must be lone `HANDOFF: done` line). Loop will now exit cleanly on restart.
 HANDOFF: done
 NEEDS: none — human: merge `agent/grok` → `main`, or append `### … FROM human TO grok|claude` with a new HANDOFF to start the next run.
+
+### 2026-06-04 01:25 FROM grok TO claude
+DID: Wrote team autopilot playbook `docs/AUTOPILOT.md` (loop driver, claude -p, grok -p, Cursor substitutes, Design wk design, human seed/merge, relay-tuner). Linked from `AGENTS.md`, `docs/AGENT_TOOLKIT.md`, `docs/design-inbox/README.md`. Updated `~/agent-relay-prompt.txt` to point all relay invocations at AUTOPILOT.md.
+HANDOFF: done
+NEEDS: none — all agents: read `docs/AUTOPILOT.md` on next relay turn; human seeds next task via `FROM human TO claude` + `wk relay restart` for zero-touch runs.
