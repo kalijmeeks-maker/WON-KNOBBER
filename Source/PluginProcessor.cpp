@@ -364,6 +364,56 @@ void WonKnobberAudioProcessor::randomizeParameters()
     // bypass left as-is
 }
 
+//==============================================================================
+// v1.1 user preset bank — thin delegation to PresetManager. All message-thread only.
+// save snapshots the live voice (getCurrentState); load applies a full state (applyState:
+// resets A/B slots to the loaded voice + active='A' + re-stamps the dirty baseline), matching
+// factory-load semantics exactly.
+
+int WonKnobberAudioProcessor::getNumUserPresets() const
+{
+    return presetManager.getNumPresets();
+}
+
+juce::String WonKnobberAudioProcessor::getUserPresetName(int i) const
+{
+    return presetManager.getPresetName(i);
+}
+
+bool WonKnobberAudioProcessor::saveUserPreset(const juce::String& name)
+{
+    return presetManager.savePreset(name, getCurrentState());
+}
+
+bool WonKnobberAudioProcessor::loadUserPreset(int i)
+{
+    WonKnobberState st;
+    if (!presetManager.loadPreset(i, st))
+        return false;
+    applyState(st);
+    return true;
+}
+
+bool WonKnobberAudioProcessor::deleteUserPreset(int i)
+{
+    return presetManager.deletePreset(i);
+}
+
+void WonKnobberAudioProcessor::refreshUserPresets()
+{
+    presetManager.refresh();
+}
+
+int WonKnobberAudioProcessor::findUserPresetIndex(const juce::String& name) const
+{
+    return presetManager.indexOf(name);
+}
+
+juce::File WonKnobberAudioProcessor::getUserPresetDirectory() const
+{
+    return presetManager.getPresetDirectory();
+}
+
 juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()
 {
     return new WonKnobberAudioProcessorEditor(*this);
@@ -482,6 +532,8 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 // Self-tests for Phase 2b preset strip + transport API (run at static init / dlopen of plugin).
 // Mirrors the style + visibility of WonKnobberState unit tests. Exercises factory load, A/B
 // save-on-switch, copy, transport save/load/undo/randomize. Output on stdout for build/qa logs.
+// Gated behind JUCE_DEBUG for consistency (no litter in Release loads).
+#if JUCE_DEBUG
 namespace
 {
 static bool runPresetTransportAPITests()
@@ -639,3 +691,4 @@ static bool runPresetTransportAPITests()
 
 static const bool presetAPITestsRan = runPresetTransportAPITests();
 } // namespace
+#endif // JUCE_DEBUG

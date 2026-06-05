@@ -54,34 +54,21 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
     faceplate.setNumFactoryPresets(processorRef.getNumFactoryPresets());
     faceplate.setPresetDisplayName(processorRef.getFactoryPresetName(0));
     faceplate.setActiveSlot(processorRef.getActiveSlot());
+    faceplate.setModified(processorRef.isDirty());  // initial dot (was only set on first timer tick)
 
     faceplate.onFactoryPresetSelected = [this](int idx)
     {
         processorRef.loadFactoryPreset(idx);
-        faceplate.setVariant(processorRef.getCurrentVariant());
-        if (auto* dp = processorRef.getDriveParameter())
-            faceplate.setDrive(dp->get());
-        if (auto* mp = processorRef.getMixParameter())
-        {
-            auto& mk = faceplate.getMixKnob();
-            mk.setValue(mp->get(), juce::dontSendNotification);
-        }
         faceplate.setPresetDisplayName(processorRef.getFactoryPresetName(idx));
         faceplate.setActiveSlot(processorRef.getActiveSlot());
+        applyLoadedStateToGui();
     };
 
     faceplate.onActiveSlotSelected = [this](char slot)
     {
         processorRef.setActiveSlot(slot);
-        faceplate.setVariant(processorRef.getCurrentVariant());
-        if (auto* dp = processorRef.getDriveParameter())
-            faceplate.setDrive(dp->get());
-        if (auto* mp = processorRef.getMixParameter())
-        {
-            auto& mk = faceplate.getMixKnob();
-            mk.setValue(mp->get(), juce::dontSendNotification);
-        }
         faceplate.setActiveSlot(slot);
+        applyLoadedStateToGui();
     };
 
     faceplate.onTransportAction = [this](const juce::String& action)
@@ -93,39 +80,20 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
         else if (action == "load")
         {
             processorRef.loadFromActiveSlot();
-            faceplate.setVariant(processorRef.getCurrentVariant());
-            if (auto* dp = processorRef.getDriveParameter())
-                faceplate.setDrive(dp->get());
-            if (auto* mp = processorRef.getMixParameter())
-            {
-                auto& mk = faceplate.getMixKnob();
-                mk.setValue(mp->get(), juce::dontSendNotification);
-            }
+            applyLoadedStateToGui();
+            faceplate.setActiveSlot(processorRef.getActiveSlot());
         }
         else if (action == "undo")
         {
             processorRef.undoLast();
-            faceplate.setVariant(processorRef.getCurrentVariant());
-            if (auto* dp = processorRef.getDriveParameter())
-                faceplate.setDrive(dp->get());
-            if (auto* mp = processorRef.getMixParameter())
-            {
-                auto& mk = faceplate.getMixKnob();
-                mk.setValue(mp->get(), juce::dontSendNotification);
-            }
+            applyLoadedStateToGui();
             faceplate.setActiveSlot(processorRef.getActiveSlot());
         }
         else if (action == "randomize")
         {
             processorRef.randomizeParameters();
-            faceplate.setVariant(processorRef.getCurrentVariant());
-            if (auto* dp = processorRef.getDriveParameter())
-                faceplate.setDrive(dp->get());
-            if (auto* mp = processorRef.getMixParameter())
-            {
-                auto& mk = faceplate.getMixKnob();
-                mk.setValue(mp->get(), juce::dontSendNotification);
-            }
+            applyLoadedStateToGui();
+            faceplate.setActiveSlot(processorRef.getActiveSlot());
         }
     };
 
@@ -134,16 +102,10 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
     faceplate.onRevertToPreset = [this]
     {
         processorRef.revertToLoadedPreset();
-        faceplate.setVariant(processorRef.getCurrentVariant());
-        if (auto* dp = processorRef.getDriveParameter())
-            faceplate.setDrive(dp->get());
-        if (auto* mp = processorRef.getMixParameter())
-        {
-            auto& mk = faceplate.getMixKnob();
-            mk.setValue(mp->get(), juce::dontSendNotification);
-        }
-        faceplate.setModified(processorRef.isDirty());
+        applyLoadedStateToGui();
     };
+
+    faceplate.onPresetMenuRequested = [this]{ showPresetMenu(); };
 
     setSize(960, 600);
     startTimerHz(30);
@@ -206,4 +168,143 @@ void WonKnobberAudioProcessorEditor::paint(juce::Graphics& g)
 void WonKnobberAudioProcessorEditor::resized()
 {
     faceplate.setBounds(getLocalBounds());
+}
+
+void WonKnobberAudioProcessorEditor::applyLoadedStateToGui()
+{
+    faceplate.setVariant(processorRef.getCurrentVariant());
+    if (auto* dp = processorRef.getDriveParameter())
+        faceplate.setDrive(dp->get());
+    if (auto* mp = processorRef.getMixParameter())
+    {
+        auto& mk = faceplate.getMixKnob();
+        mk.setValue(mp->get(), juce::dontSendNotification);
+    }
+    faceplate.setModified(processorRef.isDirty());
+}
+
+void WonKnobberAudioProcessorEditor::showPresetMenu()
+{
+    processorRef.refreshUserPresets();
+
+    juce::PopupMenu menu;
+
+    // FACTORY section
+    menu.addSectionHeader("FACTORY");
+    const int nFactory = processorRef.getNumFactoryPresets();
+    for (int i = 0; i < nFactory; ++i)
+        menu.addItem(1 + i, processorRef.getFactoryPresetName(i));
+
+    // USER section
+    menu.addSectionHeader("USER");
+    const int nUser = processorRef.getNumUserPresets();
+    if (nUser == 0)
+    {
+        menu.addItem(1000, "(no user presets)", false, false);
+    }
+    else
+    {
+        for (int i = 0; i < nUser; ++i)
+            menu.addItem(1000 + i, processorRef.getUserPresetName(i));
+    }
+
+    // actions
+    menu.addSeparator();
+    menu.addItem(2001, "Save As…");
+
+    const juce::String currentDisp = faceplate.getPresetDisplayName();
+    const int userIdxForCurrent = processorRef.findUserPresetIndex(currentDisp);
+    const bool canDeleteCurrent = userIdxForCurrent >= 0;
+    menu.addItem(2002, juce::String("Delete \"") + currentDisp + "\"…", canDeleteCurrent);
+
+    menu.addItem(2003, "Reveal Presets Folder");
+
+    menu.showMenuAsync(juce::PopupMenu::Options{}.withTargetComponent(this),
+                       [this](int r){ handlePresetMenuResult(r); });
+}
+
+void WonKnobberAudioProcessorEditor::handlePresetMenuResult(int r)
+{
+    // Menu ID scheme (to avoid magic/overlap): factory 1..N (N<1000), user 1000..1999 (1000 used for disabled placeholder when no users),
+    // actions 2001=SaveAs, 2002=Delete (enabled only for current user preset), 2003=Reveal.
+    // Factory if tightened to <1000 so r=1000 (disabled) does not oob into factory idx=999.
+    if (r >= 1 && r < 1000)
+    {
+        const int idx = r - 1;
+        processorRef.loadFactoryPreset(idx);
+        applyLoadedStateToGui();
+        faceplate.setPresetDisplayName(processorRef.getFactoryPresetName(idx));
+        faceplate.setActiveSlot(processorRef.getActiveSlot());
+    }
+    else if (r >= 1000 && r < 2000)
+    {
+        const int idx = r - 1000;
+        if (processorRef.loadUserPreset(idx))
+        {
+            applyLoadedStateToGui();
+            faceplate.setPresetDisplayName(processorRef.getUserPresetName(idx));
+            faceplate.setActiveSlot(processorRef.getActiveSlot());
+        }
+    }
+    else if (r == 2001)
+    {
+        // Save As…
+        const juce::String nameDefault = faceplate.getPresetDisplayName();  // local fetch inside handle (like delete's cur); fixes undeclared currentDisp (was showPresetMenu local)
+        juce::AlertWindow aw("Save Preset", "Preset name:", juce::AlertWindow::QuestionIcon);
+        aw.addTextEditor("name", nameDefault, "Name:");  // use current for default (was hard "My Preset")
+        aw.addButton("OK", 1);
+        aw.addButton("Cancel", 0);
+        // Capture TextEditor* before enterModalState (avoids fragile getCurrentlyModalComponent + global state in async callback).
+        // enterModalState unconditional after setup (so dialog always shows; capture nameEd without conditioning the show).
+        auto* nameEd = aw.getTextEditor("name");
+        aw.enterModalState(true, juce::ModalCallbackFunction::create([this, nameEd](int result)
+        {
+            if (result == 0) return;
+            if (!nameEd) return;
+            auto n = nameEd->getText();
+            if (n.isEmpty()) return;
+            if (processorRef.saveUserPreset(n))
+            {
+                // Use PresetManager::sanitizeName (visible via Processor.h include) to match bank name exactly.
+                // Removes prior local ad-hoc duplication + edge divergence (whitespace, ext, fallback "Untitled").
+                juce::String s = PresetManager::sanitizeName(n);
+                faceplate.setPresetDisplayName(s);
+                applyLoadedStateToGui();
+            }
+        }));
+    }
+    else if (r == 2002)
+    {
+        // Delete only for user presets (gated by menu item enabled state + recheck). Single clean confirm (no nesting).
+        const juce::String cur = faceplate.getPresetDisplayName();
+        const int idx = processorRef.findUserPresetIndex(cur);
+        if (idx >= 0)
+        {
+            juce::AlertWindow::showOkCancelBox(juce::AlertWindow::QuestionIcon, "Delete Preset",
+                juce::String("Delete \"") + cur + "\"?", "Delete", "Cancel", this,
+                juce::ModalCallbackFunction::create([this, cur](int res)  // do not capture stale idx; always resolve fresh inside cb
+                {
+                    if (res == 0) return;
+                    // Fresh resolve inside cb (re-find by current display name) so delete uses post-capture state if any race.
+                    const int freshIdx = processorRef.findUserPresetIndex(cur);
+                    if (freshIdx >= 0)
+                        processorRef.deleteUserPreset(freshIdx);
+                    applyLoadedStateToGui();
+                    // Fix stale + name-vs-state mismatch: load factory[0] so display name + loadedVoice + isDirty + slots all consistent (reuses existing factory load path + apply).
+                    if (processorRef.getNumFactoryPresets() > 0)
+                    {
+                        processorRef.loadFactoryPreset(0);
+                        applyLoadedStateToGui();
+                        faceplate.setPresetDisplayName(processorRef.getFactoryPresetName(0));
+                        faceplate.setActiveSlot(processorRef.getActiveSlot());
+                    }
+                }));
+        }
+    }
+    else if (r == 2003)
+    {
+        auto d = processorRef.getUserPresetDirectory();
+        d.createDirectory();
+        d.revealToUser();
+    }
 }
