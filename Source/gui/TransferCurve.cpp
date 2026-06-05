@@ -6,8 +6,45 @@
 
 #include "../dsp/TransferModel.h"
 
+namespace
+{
+    // Self-drawn recessed well — same machined "seated" recipe as the footer bay, so the
+    // scope reads as cut into the brushed plate instead of painted onto a flat faceplate.
+    void drawRecessedWell (juce::Graphics& g, juce::Rectangle<float> well)
+    {
+        constexpr float cornerR = 9.0f;
+
+        // dark interior: vertical gradient, darker at the top lip, lifting toward the floor
+        juce::ColourGradient floor (juce::Colour::fromFloatRGBA (0.0f, 0.0f, 0.0f, 0.44f),
+                                    well.getX(), well.getY(),
+                                    juce::Colour::fromFloatRGBA (0.0f, 0.0f, 0.0f, 0.20f),
+                                    well.getX(), well.getBottom(), false);
+        g.setGradientFill (floor);
+        g.fillRoundedRectangle (well, cornerR);
+
+        // soft inset top-shadow band — light falloff from the upper lip into the interior
+        const float bandH = well.getHeight() * 0.28f;
+        juce::ColourGradient topShade (juce::Colour::fromFloatRGBA (0.0f, 0.0f, 0.0f, 0.55f),
+                                       well.getX(), well.getY(),
+                                       juce::Colour::fromFloatRGBA (0.0f, 0.0f, 0.0f, 0.0f),
+                                       well.getX(), well.getY() + bandH, false);
+        g.setGradientFill (topShade);
+        g.fillRoundedRectangle (well.withHeight (bandH), cornerR);
+
+        // 1px inner stroke — seats the cut edge
+        g.setColour (juce::Colour::fromFloatRGBA (0.0f, 0.0f, 0.0f, 0.62f));
+        g.drawRoundedRectangle (well, cornerR, 1.0f);
+
+        // 1px top lip highlight — the machined chamfer catching light
+        g.setColour (juce::Colour::fromFloatRGBA (1.0f, 1.0f, 1.0f, 0.05f));
+        g.drawHorizontalLine ((int) well.getY(), well.getX() + cornerR, well.getRight() - cornerR);
+    }
+}
+
 void TransferCurve::paint (juce::Graphics& g)
 {
+    drawRecessedWell (g, getLocalBounds().toFloat().reduced (1.0f));
+
     const auto b = getLocalBounds().toFloat().reduced (6.0f);
 
     // faint grid

@@ -94,6 +94,9 @@ void FaceplateView::paint(juce::Graphics& g)
 
     // Phase 2b overlays for preset strip (engraved LED name + chevrons + A/B) and transport tray.
     // Drawn after chassis so text/buttons sit in the photoreal footer recesses.
+    // The footer bay is painted FIRST so the row's controls (and the lit rocker drawn later in
+    // paintOverChildren) all read as seated inside one continuous machined trough.
+    drawFooterBay(g);
     drawPresetStrip(g);
     drawTransportTray(g);
 
@@ -147,6 +150,14 @@ void FaceplateView::resized()
     // exports/faceplate-pro-anchors.json per PHASE2B_DESIGN_SPEC.md §3.
     presetStripBounds = place(121, 537, 518, 38);
     transportBounds = place(655, 531, 264, 48);
+
+    // One continuous machined bay behind the whole transport row (rocker + preset LCD + A/B +
+    // util buttons all seat inside this single trough). Full row width with ~16px horizontal /
+    // ~12px vertical padding around the controls. VISUAL-TUNE POINT: the lower gold rule is baked
+    // into the PNG (its Y is not available in code); top is pinned to y≈519 (~11px under that rule)
+    // and may need a few px of nudge against the baked plate. Spans the bypass_rocker [41,...] left
+    // edge through the util_tray_transport [...,655+264=919] right edge.
+    footerBayBounds = place(25, 519, 910, 74);
 
     // Bypass rocker (footer-left) + small About 'i' affordance (top-right corner).
     bypassRockerBounds = place(41, 531, 64, 49);
@@ -393,13 +404,70 @@ void FaceplateView::cyclePreset(int dir)
         onFactoryPresetSelected(currentPresetIndex);
 }
 
+void FaceplateView::drawFooterBay(juce::Graphics& g)
+{
+    if (footerBayBounds.isEmpty())
+        return;
+
+    // One continuous machined trough for the whole transport row. Drawn before the per-control
+    // faces (preset LCD, A/B slots, util buttons, rocker cap) so they read as seated inside it —
+    // mirrors how the rear panel sits every control in a single well instead of three islands.
+    //
+    // Material recipe (CSS shadows translated to juce::Graphics):
+    //   border-radius: 10px
+    //   background: linear-gradient(rgba(0,0,0,.44) -> rgba(0,0,0,.20))   [top -> bottom]
+    //   inset 0 0 0 1px rgba(0,0,0,.62)                                    [inner 1px stroke]
+    //   inset top lip: 1px rgba(1,1,1,.05)                                 [inner top edge]
+    //   inset 0 2px 9px rgba(0,0,0,.55)                                    [soft top inset shadow]
+    const float s = (float)getHeight() / (float)kRefH; // vertical scale (matches place()'s sy)
+    const auto bay = footerBayBounds.toFloat();
+    const float radius = 10.0f * s; // 10px corner radius, scaled
+
+    // Body: vertical dark gradient (top a touch darker than the bottom) → reads as a sunken trough.
+    juce::ColourGradient body(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.44f), bay.getX(), bay.getY(),
+                              juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.20f), bay.getX(), bay.getBottom(),
+                              false);
+    g.setGradientFill(body);
+    g.fillRoundedRectangle(bay, radius);
+
+    // Soft top inset shadow: a short vertical gradient band hugging the inside of the top edge
+    // (emulates `inset 0 2px 9px` — ~2px offset / ~9px blur). Clipped to the rounded bay so it
+    // never bleeds past the corners.
+    {
+        juce::Graphics::ScopedSaveState clip(g);
+        juce::Path bayPath;
+        bayPath.addRoundedRectangle(bay, radius);
+        g.reduceClipRegion(bayPath);
+
+        const float bandY = bay.getY() + 2.0f * s;       // ~2px inset offset
+        const float bandH = juce::jmax(3.0f, 9.0f * s);  // ~9px blur emulated as band height
+        juce::ColourGradient inset(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.55f), bay.getX(), bandY,
+                                   juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.0f), bay.getX(), bandY + bandH,
+                                   false);
+        g.setGradientFill(inset);
+        g.fillRect(bay.getX(), bandY, bay.getWidth(), bandH);
+    }
+
+    // Inner 1px stroke (the machined edge that catches the trough wall).
+    g.setColour(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.62f));
+    g.drawRoundedRectangle(bay.reduced(0.5f), radius, 1.0f);
+
+    // Top lip highlight: a faint 1px bright line just inside the top edge — the bevel where the
+    // plate meets the recess catches light. Inset horizontally by the radius so it tracks the
+    // straight run of the top edge, not the corners.
+    g.setColour(juce::Colour::fromFloatRGBA(1.0f, 1.0f, 1.0f, 0.05f));
+    const float lipY = bay.getY() + 1.0f;
+    g.drawLine(bay.getX() + radius, lipY, bay.getRight() - radius, lipY, 1.0f);
+}
+
 void FaceplateView::drawPresetStrip(juce::Graphics& g)
 {
     if (presetStripBounds.isEmpty())
         return;
 
-    // Draw only the live elements (chevrons, name LED box, A/B) — the chassis PNG already
-    // provides the brushed-metal footer recess/engraving behind these coords.
+    // Draw only the live CONTROL FACES (chevrons, name LED box, A/B slots). The unifying recess is
+    // now drawFooterBay()'s single trough (plus the chassis PNG engraving) — this routine adds NO
+    // strip-wide background fill, so the controls seat inside the one bay (no nested recess).
     const float h = (float)presetStripBounds.getHeight();
 
     // Engraved/LED-style preset name display (recessed dark track + text in gui.md engravedText).
@@ -486,12 +554,14 @@ void FaceplateView::drawTransportTray(juce::Graphics& g)
     if (transportBounds.isEmpty())
         return;
 
+    // No tray-wide background fill here — drawFooterBay() supplies the single recess. Each button
+    // below is just its own control face (the round/util button body), so they seat inside the bay.
     auto drawTBtn = [&](const juce::Rectangle<int>& b, const juce::String& label)
     {
         if (b.isEmpty())
             return;
         const auto bf = b.toFloat().reduced(1.0f);
-        // Recessed button on the metal tray.
+        // Recessed button body on the bay floor (control-level inset; kept).
         g.setColour(juce::Colour(0xff0f0f11).withAlpha(0.82f));
         g.fillRoundedRectangle(bf, 3.0f);
         g.setColour(juce::Colour(0xff9aa0a3).withAlpha(0.35f));
@@ -545,11 +615,21 @@ void FaceplateView::drawBypassRocker(juce::Graphics& g)
 
     const auto b = bypassRockerBounds.toFloat().reduced(2.0f);
 
-    // Recessed metal body (shares the transport-button palette).
-    g.setColour(juce::Colour(0xff0f0f11).withAlpha(0.85f));
+    // Rocker CAP seated inside drawFooterBay()'s trough. Previously this drew its OWN recessed
+    // well (dark fill + light inner stroke) which, sitting inside the new bay, read as a nested
+    // second hole. Flattened to a subtly top-lit raised cap so the rocker reads as a control
+    // resting IN the one bay (the dot + BYPASS label below are unchanged). Shares the
+    // transport-button palette so the row stays cohesive.
+    juce::ColourGradient cap(juce::Colour(0xff2a2c2e), b.getX(), b.getY(),
+                             juce::Colour(0xff161719), b.getX(), b.getBottom(), false);
+    g.setGradientFill(cap);
     g.fillRoundedRectangle(b, 4.0f);
-    g.setColour(juce::Colour(0xff9aa0a3).withAlpha(0.35f));
+    // Thin dark base edge where the cap meets the bay floor (grounds the cap; no recess look).
+    g.setColour(juce::Colour(0xff000000).withAlpha(0.45f));
     g.drawRoundedRectangle(b.reduced(0.5f), 4.0f, 0.7f);
+    // 1px top-lip highlight on the cap's crown (catches light like the bay's own lip).
+    g.setColour(juce::Colour::fromFloatRGBA(1.0f, 1.0f, 1.0f, 0.06f));
+    g.drawLine(b.getX() + 4.0f, b.getY() + 1.0f, b.getRight() - 4.0f, b.getY() + 1.0f, 1.0f);
 
     // Telltale dot: amber glow when BYPASSED (warns the signal is dry); dark when engaged.
     const float dotR = juce::jmin(b.getWidth(), b.getHeight()) * 0.20f;

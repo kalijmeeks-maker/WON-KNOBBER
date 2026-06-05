@@ -123,12 +123,14 @@ private:
     bool modified{false};     // "modified-from-preset" — drives the ember dot beside the name
 
     // Cached scaled rects (from place() in resized) for drawing the overlays and mouse hit-testing in footer.
+    juce::Rectangle<int> footerBayBounds; // single machined trough spanning the whole transport row
     juce::Rectangle<int> presetStripBounds, transportBounds;
     juce::Rectangle<int> chevLeftBounds, chevRightBounds, aButtonBounds, bButtonBounds;
     juce::Rectangle<int> presetNameBounds; // the engraved LED-style display area inside strip
     juce::Rectangle<int> modifiedDotBounds; // small ember dot + click hit-target, right of the name LED
     juce::Rectangle<int> saveBtnBounds, loadBtnBounds, undoBtnBounds, randBtnBounds;
 
+    void drawFooterBay(juce::Graphics& g); // one continuous recessed bay behind the whole footer row
     void drawPresetStrip(juce::Graphics& g);
     void drawTransportTray(juce::Graphics& g);
     void cyclePreset(int dir); // -1 prev, +1 next; wraps; fires callback
