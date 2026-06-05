@@ -1,6 +1,6 @@
 /*
-    FaceplateView.cpp — draws the embedded photoreal PRO chassis (960x600) and seats the
-    hero filmstrip knob in the SATURATION well. Controls are placed in 960x600 reference
+    FaceplateView.cpp — draws the embedded photoreal PRO chassis (960x612) and seats the
+    hero filmstrip knob in the SATURATION well. Controls are placed in 960x612 reference
     coords and scaled to the actual size. Live instruments (transfer / harmonics / meters)
     are Phase 2.
 */
@@ -10,8 +10,8 @@
 
 FaceplateView::FaceplateView()
 {
-    faceplate = juce::ImageCache::getFromMemory(BinaryData::faceplate_pro_960x600_png,
-                                                BinaryData::faceplate_pro_960x600_pngSize);
+    faceplate = juce::ImageCache::getFromMemory(BinaryData::faceplate_pro_960x612_png,
+                                                BinaryData::faceplate_pro_960x612_pngSize);
 
     // Register all 7 gem variants for the "choose your stone" picker.
     // Diamond is added first so it's the default on a fresh load.
@@ -121,46 +121,40 @@ void FaceplateView::resized()
                                     juce::roundToInt((float)rw * sx), juce::roundToInt((float)rh * sy));
     };
 
-    // Authoritative anchors from Claude Design (faceplate-pro-anchors.json, 960x600).
-    transferCurve.setBounds(place(57, 168, 240, 240));          // transfer_panel
-    harmonicBars.setBounds(place(705, 168, 240, 166));          // harmonics_panel
-    driveKnob.setBounds(place(501 - 115, 289 - 115, 230, 230)); // hero_knob_well, centre (501,289)
+    // Authoritative anchors from Claude Design (faceplate-pro-anchors.json, 960x612 plate-truth, 2026-06-05).
+    transferCurve.setBounds(place(76, 240, 184, 184));          // transfer_screen
+    harmonicBars.setBounds(place(695, 186, 224, 128));          // harmonics_bars
+    driveKnob.setBounds(place(480 - 104, 287 - 104, 208, 208)); // hero_knob_well, centre (480,287), ~208px
 
-    // GemChip — small persistent pill centred below the knob, above the dB readout.
-    // Reference rect [438, 405, 126, 16] in 960x600 coords (sits in the gap between
-    // the knob's bottom and db_readout's [421, 423, 161, 51]).
-    gemChip.setBounds(place(438, 405, 126, 16));
+    // GemChip — small persistent pill centred below the knob, above the dB readout
+    // (sits in the gap between the knob's bottom and the db_readout well [402,457,157,52]).
+    gemChip.setBounds(place(417, 432, 126, 16));
 
     // Twin horizontal IN/OUT peak meters in the io_meters strip atop the chassis.
-    ioMeter.setBounds(place(503, 31, 200, 73));
+    ioMeter.setBounds(place(549, 40, 176, 42));
 
     // DRY/WET mix knob at the mix_knob anchor (bottom right of harmonics area).
-    mixKnob.setBounds(place(758, 346, 134, 110));
+    mixKnob.setBounds(place(726, 359, 134, 110));
 
-    // POWER · SIG · CLIP dome LEDs at status_leds anchor centres (806,55) (850,55)
-    // (894,55), 14 px each. Bounds span: left = POWER centre - 7, right = CLIP centre
-    // + 7 → x=799 .. 901 (102 wide), y=48 .. 62 (14 tall). StatusLEDs derives the
-    // three centres internally as fractions of its bounds.
-    statusLEDs.setBounds(place(799, 48, 102, 14));
+    // POWER · SIG · CLIP dome LEDs. Plate-truth bezels: power [812,49,21], sig [858,49,21],
+    // clip [897,49,21]; bounds span those three. StatusLEDs derives the centres internally.
+    statusLEDs.setBounds(place(812, 49, 106, 21));
 
     // Drive -> dB readout in the recessed well below the hero knob.
-    dbReadout.setBounds(place(421, 423, 161, 51));
+    dbReadout.setBounds(place(402, 457, 157, 52));
 
     // Phase 2b: preset strip (center footer) + util_tray_transport (right). Anchors from
     // exports/faceplate-pro-anchors.json per PHASE2B_DESIGN_SPEC.md §3.
-    presetStripBounds = place(121, 537, 518, 38);
-    transportBounds = place(655, 531, 264, 48);
+    presetStripBounds = place(133, 531, 494, 38);
+    transportBounds = place(643, 526, 264, 48);
 
-    // One continuous machined bay behind the whole transport row (rocker + preset LCD + A/B +
-    // util buttons all seat inside this single trough). Full row width with ~16px horizontal /
-    // ~12px vertical padding around the controls. VISUAL-TUNE POINT: the lower gold rule is baked
-    // into the PNG (its Y is not available in code); top is pinned to y≈519 (~11px under that rule)
-    // and may need a few px of nudge against the baked plate. Spans the bypass_rocker [41,...] left
-    // edge through the util_tray_transport [...,655+264=919] right edge.
-    footerBayBounds = place(25, 519, 910, 74);
+    // foot_bay: one continuous machined trough behind the whole transport row (rocker + preset
+    // LCD + A/B + util buttons all seat inside it). Plate-truth rect [37,512,886,80]; the +12px
+    // 612 extension gives the footer breathing room below.
+    footerBayBounds = place(37, 512, 886, 80);
 
     // Bypass rocker (footer-left) + small About 'i' affordance (top-right corner).
-    bypassRockerBounds = place(41, 531, 64, 49);
+    bypassRockerBounds = place(40, 536, 64, 49);
     aboutBtnBounds = place(930, 9, 20, 20);
 
     // Sub-rects inside presetStrip for interactive elements + name LED.

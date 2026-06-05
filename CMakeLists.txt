@@ -56,7 +56,7 @@ target_sources(WonKnobber PRIVATE ${WK_SOURCES})
 # Embedding all 7 (~43 MB total) keeps the plugin self-contained offline; the
 # "choose your stone" picker swaps between them at runtime via KnobLookAndFeel.
 juce_add_binary_data(WonKnobberBinaryData SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x600.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Resources/faceplate_pro_960x612.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/Resources/Fonts/Orbitron.ttf"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_diamond_256.png"
     "${CMAKE_CURRENT_SOURCE_DIR}/sprites/knob_onyx_256.png"
@@ -115,4 +115,37 @@ if(MSVC)
     target_compile_options(WonKnobber PRIVATE /W4 /WX)
 else()
     target_compile_options(WonKnobber PRIVATE -Wall -Wextra -Werror)
+endif()
+
+# ---- Headless GUI render harness (front faceplate -> PNG, no host/window) ----
+# OFF by default so normal/CI plugin builds aren't slowed; enable with
+# -DWK_BUILD_RENDER_HARNESS=ON. Build target: WonKnobberRender.
+option(WK_BUILD_RENDER_HARNESS "Build the headless GUI render harness (WonKnobberRender)" OFF)
+if(WK_BUILD_RENDER_HARNESS)
+    juce_add_console_app(WonKnobberRender PRODUCT_NAME "WonKnobberRender")
+
+    file(GLOB_RECURSE WK_HARNESS_SRC CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Source/*.cpp")
+    list(FILTER WK_HARNESS_SRC EXCLUDE REGEX "/PluginProcessor\\.cpp$")
+    list(FILTER WK_HARNESS_SRC EXCLUDE REGEX "/PluginEditor\\.cpp$")
+    target_sources(WonKnobberRender PRIVATE ${WK_HARNESS_SRC} "${CMAKE_CURRENT_SOURCE_DIR}/tools/RenderHarness.cpp")
+
+    target_include_directories(WonKnobberRender PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+    target_compile_definitions(WonKnobberRender PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_STANDALONE_APPLICATION=1
+    )
+    target_link_libraries(WonKnobberRender
+        PRIVATE
+            WonKnobberBinaryData
+            juce::juce_audio_utils
+            juce::juce_dsp
+            RTNeural
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags
+    )
+    get_target_property(_rtneural_inc_h RTNeural INTERFACE_INCLUDE_DIRECTORIES)
+    if(_rtneural_inc_h)
+        target_include_directories(WonKnobberRender SYSTEM PRIVATE ${_rtneural_inc_h})
+    endif()
 endif()
