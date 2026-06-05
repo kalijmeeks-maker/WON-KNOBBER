@@ -98,9 +98,9 @@ public:
     bool isBypassed() const { return bypassed; }
 
 private:
-    // Design reference is the 960x600 PRO chassis; controls are placed in its coords.
+    // Design reference is the 960x612 PRO chassis; controls are placed in its coords.
     static constexpr int kRefW = 960;
-    static constexpr int kRefH = 600;
+    static constexpr int kRefH = 612;
 
     KnobLookAndFeel knobLnf;
     juce::Slider driveKnob;

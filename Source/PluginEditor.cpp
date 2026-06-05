@@ -107,7 +107,7 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
 
     faceplate.onPresetMenuRequested = [this]{ showPresetMenu(); };
 
-    setSize(960, 600);
+    setSize(960, 612);
     startTimerHz(30);
 }
 
