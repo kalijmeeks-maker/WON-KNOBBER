@@ -21,6 +21,13 @@ struct WonKnobberState
     bool neuralEngage{false};
     // Future fields appended here only; NEVER reorder members (serialisation stability).
 
+    // Schema version of the ValueTree serialisation. Bump when the on-disk attribute set changes in a way
+    // that needs migration. v1 = drive/mix/variant/bypass. v2 = + cab/neural slots. NOT persisted on the
+    // struct (ValueTree-only metadata): the per-field default-on-missing + sanitize path makes every field
+    // forward/backward tolerant. fromValueTree reads + clamps this so a future bump has a branch hook and an
+    // unknown future producer can never crash the loader.
+    static constexpr int kCurrentSchemaVersion = 2;
+
     juce::ValueTree toValueTree() const;
     static WonKnobberState fromValueTree(const juce::ValueTree& v);
 

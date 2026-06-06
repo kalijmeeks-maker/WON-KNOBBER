@@ -8,4 +8,5 @@ namespace ParamIDs
 {
     constexpr auto drive = "drive";
     constexpr auto mix = "mix";
+    constexpr auto bypass = "bypass"; // host-facing bypass param (registered AFTER drive+mix => index 2)
 }

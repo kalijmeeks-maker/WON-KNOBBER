@@ -19,8 +19,33 @@ WonKnobberAudioProcessor::WonKnobberAudioProcessor()
                      new juce::AudioParameterFloat(juce::ParameterID{ParamIDs::drive, 1}, "Drive", 0.0f, 1.0f, 0.5f));
     addParameter(mix = new juce::AudioParameterFloat(juce::ParameterID{ParamIDs::mix, 1}, "Mix", 0.0f, 1.0f, 1.0f));
 
+    // Host-facing bypass param. Registered LAST (index 2) so drive=0/mix=1 automation lanes stay stable.
+    // The param is the authoritative bypass value; bypassState is its lock-free audio-thread cache, kept in
+    // sync by parameterValueChanged (fires on whatever thread writes the value; the body is only an atomic store).
+    addParameter(bypassParam = new juce::AudioParameterBool(juce::ParameterID{ParamIDs::bypass, 1}, "Bypass", false));
+    bypassParam->addListener(this);
+    bypassState.store(bypassParam->get(), std::memory_order_relaxed); // seed the mirror once
+
     // Init A/B slots to the default current state (per foundation contract: slots = current until UI diverges).
     applyState(getCurrentState());
+}
+
+WonKnobberAudioProcessor::~WonKnobberAudioProcessor()
+{
+    if (bypassParam != nullptr)
+        bypassParam->removeListener(this);
+}
+
+void WonKnobberAudioProcessor::parameterValueChanged(int /*parameterIndex*/, float /*newValue*/)
+{
+    // Fan out the authoritative bypass param into the lock-free audio-thread cache. RT-safe (atomic store only).
+    if (bypassParam != nullptr)
+        bypassState.store(bypassParam->get(), std::memory_order_relaxed);
+}
+
+void WonKnobberAudioProcessor::parameterGestureChanged(int /*parameterIndex*/, bool /*gestureIsStarting*/)
+{
+    // No-op: gesture brackets are recorded by the host; nothing to mirror on the audio thread.
 }
 
 void WonKnobberAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -160,7 +185,7 @@ WonKnobberState WonKnobberAudioProcessor::getCurrentState() const noexcept
     s.drive = drive ? drive->get() : 0.5f;
     s.mix = mix ? mix->get() : 1.0f;
     s.variant = currentVariant;
-    s.bypass = bypassState;
+    s.bypass = (bypassParam != nullptr) ? bypassParam->get() : bypassState.load(std::memory_order_relaxed);
     s.cabIr = currentCabIr;
     s.neuralModel = currentNeuralModel;
     s.cabEngage = cabEngage;
@@ -175,7 +200,12 @@ void WonKnobberAudioProcessor::applyStateToParams(const WonKnobberState& st) noe
     currentVariant = st.variant;
     if (mix != nullptr)
         *mix = st.mix;
-    bypassState = st.bypass;
+    // Write the PARAM so the host sees recalled bypass; parameterValueChanged fans out to the atomic mirror.
+    // Defensive fallback keeps the mirror correct if ever called before the ctor registers the param.
+    if (bypassParam != nullptr)
+        *bypassParam = st.bypass;
+    else
+        bypassState.store(st.bypass, std::memory_order_relaxed);
     currentCabIr = st.cabIr;
     currentNeuralModel = st.neuralModel;
     cabEngage = st.cabEngage;
@@ -444,6 +474,24 @@ juce::File WonKnobberAudioProcessor::getUserPresetDirectory() const
     return presetManager.getPresetDirectory();
 }
 
+juce::AudioProcessorParameter* WonKnobberAudioProcessor::getBypassParameter() const
+{
+    // Non-null tells JUCE the host drives bypass via this param. Per the JUCE contract we must honour it in
+    // processBlock — which we do via the bypassState mirror (updated by parameterValueChanged).
+    return bypassParam;
+}
+
+void WonKnobberAudioProcessor::processBlockBypassed(juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
+{
+    // Direct-call path (e.g. pluginval). The default base impl (processBypassed) asserts getLatencySamples()==0,
+    // which trips here because the saturation oversampler reports non-zero latency. Mirror the in-processBlock
+    // true-bypass convention (zero-latency dry passthrough): leave input channels untouched, clear only surplus
+    // output channels. RT-safe (no alloc/lock/IO).
+    juce::ScopedNoDenormals noDenormals;
+    for (int ch = getMainBusNumInputChannels(); ch < getTotalNumOutputChannels(); ++ch)
+        buffer.clear(ch, 0, buffer.getNumSamples());
+}
+
 juce::AudioProcessorEditor* WonKnobberAudioProcessor::createEditor()
 {
     return new WonKnobberAudioProcessorEditor(*this);
@@ -470,6 +518,8 @@ void WonKnobberAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
     stream.writeByte(0);
 
     juce::ValueTree rootVT{"WONKNOBBER"};
+    // Envelope version: reserved for future host-state migration (read in setStateInformation if/when bumped).
+    // The per-WonKnobberState `version` (read+guarded in fromValueTree) covers the field-level forward-compat.
     rootVT.setProperty("version", 1, nullptr);
 
     rootVT.addChild(curr.toValueTree(), -1, nullptr);

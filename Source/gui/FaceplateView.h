@@ -30,6 +30,7 @@ public:
     void paintOverChildren(juce::Graphics& g) override;
     void resized() override;
     void mouseDown(const juce::MouseEvent& e) override;
+    bool keyPressed(const juce::KeyPress& key) override; // Esc steps Licences->About->close (mirrors RearPanelView)
 
     juce::Slider& getDriveKnob() { return driveKnob; }
     juce::Slider& getMixKnob() { return mixKnob.getSlider(); }
@@ -153,6 +154,10 @@ private:
     void drawFlipButton(juce::Graphics& g); // provisional ⟳ FLIP affordance (pending flip-spec.html)
     void drawAboutPanel(juce::Graphics& g);
     void drawLicencesPanel(juce::Graphics& g);
+    // While the front modal is open, suppress mouse interception on the live child controls so clicks fall
+    // through to FaceplateView::mouseDown (where the modal hit-test handles close/click-outside/links). Restores
+    // normal interaction on close. Message thread only.
+    void setModalCaptureActive(bool active);
     juce::String getLicencesBodyText() const;                  // verbatim Airwindows MIT text + per-asset note
     juce::Rectangle<int> computeAboutPanelBounds() const;      // centred modal rect (shared by paint + hit-test)
     juce::Rectangle<int> computeLicencesLinkBounds() const;    // "View full licences ▸" hit-target inside the About card
