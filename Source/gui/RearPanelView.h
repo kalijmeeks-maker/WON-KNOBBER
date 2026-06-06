@@ -1,14 +1,15 @@
 /*
-    RearPanelView.h — the flip-to-rear "service panel" (960x600). Draws the photoreal rose/amber
+    RearPanelView.h — the flip-to-rear "service panel" (960x612). Draws the photoreal rose/amber
     rear chassis (baked PNG) and paints the LIVE layers over it per docs/rear-panel-anchors.json (#51):
     CABINET + NEURAL engage rockers/LEDs + IR/model selection wells, plus the flip-to-front medallion.
     Static labels/recesses (module frames, oversampling seg, I/O-trim strip, power entry) are baked
     into the PNG. Cab/neural selection is the rear-fold "override": it drives the processor's cab/neural
     state directly, which lights the front modified-from-preset dot when it diverges from the loaded voice.
 
-    NOTE (PR4 scope): the flip AFFORDANCE visual + front<->rear rotation transition are deferred until
-    Design's flip-spec.html lands; the medallion here is a plain click-to-return hit-target for now.
-    Oversampling + I/O-trim are baked-only placeholders (no params yet).
+    NOTE: the flip is wired — clicking the medallion (full hero-well hit-target) runs the front<->rear
+    rotation via FlipTransition. Oversampling, I/O-trim, and ABOUT/MANUAL are baked-only placeholders
+    with no click handlers yet (PR4 scope). SHIP-REQUIRED before 1.0: wire rear ABOUT to the licences
+    modal (MIT/Airwindows notice — ABOUT is its only rear entry point).
     WON-KNOBBER · part of the gui layer
 */
 #pragma once
@@ -51,7 +52,7 @@ private:
     bool neuralEngaged{false};
     bool bypassed{false};
 
-    // Anchors (960x600 ref) recomputed to actual bounds in resized().
+    // Anchors (960x612 ref) recomputed to actual bounds in resized().
     juce::Rectangle<int> cabEngageRockerBounds, cabEngageLedBounds, cabIrWellBounds;
     juce::Rectangle<int> neuralEngageRockerBounds, neuralEngageLedBounds, neuralModelWellBounds;
     juce::Rectangle<int> flipMedallionBounds;

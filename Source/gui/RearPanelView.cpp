@@ -110,14 +110,16 @@ void RearPanelView::resized()
                                     juce::roundToInt((float)rw * sx), juce::roundToInt((float)rh * sy));
     };
 
-    // Authoritative rear anchors (docs/rear-panel-anchors.json, #51, 960x600).
+    // Authoritative rear anchors (docs/rear-panel-anchors.json, 960x612).
     cabEngageRockerBounds = place(59, 168, 64, 30);
     cabEngageLedBounds = place(135, 177, 12, 12);
     cabIrWellBounds = place(59, 233, 263, 48);
     neuralEngageRockerBounds = place(638, 168, 64, 30);
     neuralEngageLedBounds = place(714, 177, 12, 12);
     neuralModelWellBounds = place(638, 233, 263, 47);
-    flipMedallionBounds = place(416, 200, 128, 128);
+    // Full flip_hero_well is the hit-target (FLIP label + SAT->CAB->NEURAL readout all read as one
+    // control) — no dead rose-gold ring around the medallion.
+    flipMedallionBounds = place(386, 170, 188, 188);
 
     const int chev = juce::jmax(20, cabIrWellBounds.getHeight());
     cabPrevBounds = cabIrWellBounds.withWidth(chev);
