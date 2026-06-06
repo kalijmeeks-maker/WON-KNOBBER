@@ -73,6 +73,8 @@ void Convolution::setIr (const juce::String& cabIrId)
 // engage gate is a bit-exact passthrough, that a valid embedded IR loads + processes finite,
 // and that an unknown id is a safe no-op. Does NOT assert the async IR is fully swapped in
 // (loadImpulseResponse finishes on a background thread).
+// DEBUG-only: gated so Release builds neither run these at dlopen nor print to stdout (ship-gate).
+#if JUCE_DEBUG
 namespace
 {
 static bool runConvolutionSmokeTests()
@@ -129,3 +131,4 @@ static bool runConvolutionSmokeTests()
 
 static const bool convSmokeRan = runConvolutionSmokeTests();
 } // namespace
+#endif // JUCE_DEBUG

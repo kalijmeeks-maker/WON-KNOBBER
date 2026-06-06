@@ -116,6 +116,8 @@ void NeuralModel::setModel (const juce::String& modelId)
 //==============================================================================
 // Smoke tests (run at static init / dlopen, same pattern as Convolution/WonKnobberState):
 // disengaged passthrough is bit-exact, an engaged real model stays finite, NONE is a safe no-op.
+// DEBUG-only: gated so Release builds neither run these at dlopen nor print to stdout (ship-gate).
+#if JUCE_DEBUG
 namespace
 {
 static bool runNeuralModelSmokeTests()
@@ -171,3 +173,4 @@ static bool runNeuralModelSmokeTests()
 
 static const bool neuralSmokeRan = runNeuralModelSmokeTests();
 } // namespace
+#endif // JUCE_DEBUG
