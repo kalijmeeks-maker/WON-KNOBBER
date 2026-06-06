@@ -54,7 +54,7 @@ static void sanitizeState(WonKnobberState& s)
 juce::ValueTree WonKnobberState::toValueTree() const
 {
     juce::ValueTree vt{"WonKnobberState"};
-    vt.setProperty("version", 1, nullptr);
+    vt.setProperty("version", kCurrentSchemaVersion, nullptr);
     vt.setProperty("drive", drive, nullptr);
     vt.setProperty("mix", mix, nullptr);
     vt.setProperty("variant", variant, nullptr);
