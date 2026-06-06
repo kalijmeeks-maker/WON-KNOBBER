@@ -73,6 +73,10 @@ FaceplateView::FaceplateView()
     addAndMakeVisible(statusLEDs);
     addAndMakeVisible(dbReadout);
 
+    // Allow keyboard focus so the About/Licences modal can field Esc (focus is grabbed only while the modal is
+    // open and given back on close, so it never steals focus during normal use). Mirrors RearPanelView.
+    setWantsKeyboardFocus(true);
+
     // bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
 
@@ -302,15 +306,21 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
         if (closeBox.contains(pos) || !panel.contains(pos))
         {
             aboutVisible = false;
+            setModalCaptureActive(false);  // restore child interaction
+            giveAwayKeyboardFocus();       // release the focus grabbed when the modal opened
             repaint();
         }
         return;
     }
 
-    // 'i' affordance opens the About panel.
+    // 'i' affordance opens the About panel. Make it truly modal: capture clicks (children stop intercepting,
+    // so further clicks route to this mouseDown's modal hit-test) and grab focus so Esc reaches keyPressed.
     if (aboutBtnBounds.contains(pos))
     {
         aboutVisible = true;
+        licencesScrollY = 0;
+        setModalCaptureActive(true);
+        grabKeyboardFocus();
         repaint();
         return;
     }
@@ -396,6 +406,30 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
             onTransportAction("randomize");
         return;
     }
+}
+
+bool FaceplateView::keyPressed(const juce::KeyPress& key)
+{
+    // Esc steps Licences -> About -> close (mirrors RearPanelView). Only acts while the modal is open.
+    if (key == juce::KeyPress::escapeKey)
+    {
+        if (licencesVisible)
+        {
+            // Return to the still-open About card; capture + focus must STAY active.
+            licencesVisible = false;
+            repaint();
+            return true;
+        }
+        if (aboutVisible)
+        {
+            aboutVisible = false;
+            setModalCaptureActive(false); // restore child interaction
+            giveAwayKeyboardFocus();
+            repaint();
+            return true;
+        }
+    }
+    return juce::Component::keyPressed(key);
 }
 
 void FaceplateView::cyclePreset(int dir)
@@ -584,6 +618,26 @@ void FaceplateView::drawTransportTray(juce::Graphics& g)
     drawTBtn(loadBtnBounds, "L");                                                  // load (from active slot)
     drawTBtn(undoBtnBounds, juce::String(juce::CharPointer_UTF8("\xe2\x86\xba"))); // ↺ undo
     drawTBtn(randBtnBounds, "R");                                                  // randomize (dice affordance)
+}
+
+//==============================================================================
+// While the front About/Licences modal is open, the modal is only drawn (in paintOverChildren) — clicks would
+// otherwise still hit the live children below it. Toggle interception off on every interactive child so clicks
+// fall through to FaceplateView::mouseDown (whose modal hit-test handles close/click-outside/View-licences),
+// and restore it on close. The MixKnob's inner slider is a grandchild, so it must be suppressed explicitly too.
+void FaceplateView::setModalCaptureActive(bool active)
+{
+    const bool clickable = !active;
+    driveKnob.setInterceptsMouseClicks(clickable, clickable);
+    mixKnob.setInterceptsMouseClicks(clickable, clickable);
+    mixKnob.getSlider().setInterceptsMouseClicks(clickable, clickable);
+    gemChip.setInterceptsMouseClicks(clickable, clickable);
+    // Non-interactive scopes/meters today, but future-proof + harmless (they never consume clicks anyway).
+    transferCurve.setInterceptsMouseClicks(clickable, clickable);
+    harmonicBars.setInterceptsMouseClicks(clickable, clickable);
+    ioMeter.setInterceptsMouseClicks(clickable, clickable);
+    statusLEDs.setInterceptsMouseClicks(clickable, clickable);
+    dbReadout.setInterceptsMouseClicks(clickable, clickable);
 }
 
 //==============================================================================

@@ -15,24 +15,21 @@ WonKnobberAudioProcessorEditor::WonKnobberAudioProcessorEditor(WonKnobberAudioPr
     auto& knob = faceplate.getDriveKnob();
     if (auto* driveParam = processorRef.getDriveParameter())
     {
-        knob.setValue(driveParam->get(), juce::dontSendNotification);
-        knob.onValueChange = [this, &knob, driveParam]
-        {
-            *driveParam = (float)knob.getValue();
-            faceplate.setDrive((float)knob.getValue());
-        };
+        // The attachment owns param<->slider sync (seeds the slider on construction) AND brackets every drag
+        // with begin/endChangeGesture for correct Touch/Latch automation. It writes the param itself.
+        driveAttachment = std::make_unique<juce::SliderParameterAttachment>(*driveParam, knob, nullptr);
+        // Slim onValueChange feeds ONLY the transfer-curve/harmonics/dB visuals — it must NOT write the param
+        // (the attachment does that) to avoid a double-write. SliderParameterAttachment uses a Slider::Listener
+        // + onDragStart/onDragEnd for its sync, leaving Slider::onValueChange free for app use.
+        knob.onValueChange = [this, &knob] { faceplate.setDrive((float)knob.getValue()); };
         faceplate.setDrive(driveParam->get());
     }
 
     auto& mixKnob = faceplate.getMixKnob();
     if (auto* mixParam = processorRef.getMixParameter())
     {
-        mixKnob.setValue(mixParam->get(), juce::dontSendNotification);
-        mixKnob.onValueChange = [this, &mixKnob, mixParam]
-        {
-            *mixParam = (float)mixKnob.getValue();
-            juce::ignoreUnused(this);
-        };
+        // Mix has no visual side-effect lambda; the attachment handles seed + write + gesture brackets.
+        mixAttachment = std::make_unique<juce::SliderParameterAttachment>(*mixParam, mixKnob, nullptr);
     }
 
     // Restore the persisted stone (defaults to "diamond" on a fresh load) and

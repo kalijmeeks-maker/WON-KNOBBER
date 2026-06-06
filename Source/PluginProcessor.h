@@ -15,7 +15,8 @@
 
 #include <atomic>
 
-class WonKnobberAudioProcessor : public juce::AudioProcessor
+class WonKnobberAudioProcessor : public juce::AudioProcessor,
+                                 private juce::AudioProcessorParameter::Listener
 {
 public:
     // GUI peak-meter snapshot — linear magnitudes (0..~1), pre- and post-chain,
@@ -27,7 +28,7 @@ public:
     };
 
     WonKnobberAudioProcessor();
-    ~WonKnobberAudioProcessor() override = default;
+    ~WonKnobberAudioProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -52,6 +53,12 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    // Host-facing bypass: returning the registered bypass param tells JUCE the host drives bypass via
+    // automation (and manages bypassed latency). We still override processBlockBypassed so pluginval's
+    // direct call is latency-correct (the default base impl asserts getLatencySamples()==0).
+    juce::AudioProcessorParameter* getBypassParameter() const override;
+    void processBlockBypassed(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+
     juce::AudioParameterFloat* getDriveParameter() const noexcept { return drive; }
     juce::AudioParameterFloat* getMixParameter() const noexcept { return mix; }
 
@@ -61,9 +68,21 @@ public:
     juce::String getCurrentVariant() const { return currentVariant; }
     void setCurrentVariant(const juce::String& v) { currentVariant = v; }
 
-    // Bypass state (future rocker). Persisted via get/setStateInformation. Default false (chain engaged).
-    bool getBypassState() const noexcept { return bypassState; }
-    void setBypassState(bool shouldBypass) { bypassState = shouldBypass; }
+    // Bypass state (rocker / host-recall sync). The host-facing AudioParameterBool (bypassParam) is the
+    // authoritative value; bypassState is its lock-free audio-thread cache. These thin wrappers drive the
+    // PARAM (setValueNotifyingHost on the write path) so the editor rocker also records host automation.
+    // Persisted via get/setStateInformation (WonKnobberState.bypass). Default false (chain engaged).
+    bool getBypassState() const noexcept
+    {
+        return bypassParam != nullptr ? bypassParam->get() : bypassState.load(std::memory_order_relaxed);
+    }
+    void setBypassState(bool shouldBypass)
+    {
+        if (bypassParam != nullptr)
+            bypassParam->setValueNotifyingHost(shouldBypass ? 1.0f : 0.0f);
+        else
+            bypassState.store(shouldBypass, std::memory_order_relaxed);
+    }
 
     // Phase 2b: minimal factory preset API (embedded via BinaryData; 2 presets for this slice).
     int getNumFactoryPresets() const;
@@ -126,7 +145,11 @@ private:
     juce::String currentVariant{"diamond"};    // persisted in plugin state
     juce::AudioParameterFloat* mix{nullptr};   // 0.0 - 1.0, default 1.0 (full wet for backwards compat)
 
-    std::atomic<bool> bypassState{false}; // bypass rocker; persisted; read on audio thread (true bypass = dry passthrough)
+    // Host-facing bypass param (registered AFTER drive+mix => index 2 so drive=0/mix=1 automation lanes stay stable).
+    // Authoritative bypass value; the host + editor write it, getBypassParameter() returns it.
+    juce::AudioParameterBool* bypassParam{nullptr};
+    // Audio-thread cache of bypassParam (lock-free read in processBlock). Kept in sync via parameterValueChanged.
+    std::atomic<bool> bypassState{false}; // true bypass = dry passthrough
 
     // Cab + neural slot selection (persisted UI state, like variant; NOT automatable params).
     // Defaults OFF so legacy sessions keep identical audio.
@@ -167,6 +190,12 @@ private:
 
     // Apply only to live params/variant (no touch to slots or active). Used by A/B switch/load-from-slot.
     void applyStateToParams(const WonKnobberState& st) noexcept;
+
+    // AudioProcessorParameter::Listener — keeps bypassState (the audio-thread cache) in sync with bypassParam.
+    // parameterValueChanged may fire on the audio thread in some wrappers; the body is a single lock-free
+    // atomic store (no alloc/lock/IO), so it stays RT-safe. Only registered on bypassParam.
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(WonKnobberAudioProcessor)
 };

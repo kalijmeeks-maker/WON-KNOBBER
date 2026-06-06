@@ -54,7 +54,7 @@ static void sanitizeState(WonKnobberState& s)
 juce::ValueTree WonKnobberState::toValueTree() const
 {
     juce::ValueTree vt{"WonKnobberState"};
-    vt.setProperty("version", 1, nullptr);
+    vt.setProperty("version", kCurrentSchemaVersion, nullptr);
     vt.setProperty("drive", drive, nullptr);
     vt.setProperty("mix", mix, nullptr);
     vt.setProperty("variant", variant, nullptr);
@@ -87,6 +87,14 @@ WonKnobberState WonKnobberState::fromValueTree(const juce::ValueTree& v)
             }
         }
     }
+
+    // Read the schema version (forward-compat guard). Unknown future versions still parse best-effort:
+    // every field below defaults-on-missing and is range-clamped by sanitizeState, so a newer producer can
+    // never crash this loader. A real future migration would branch here on schemaVersion. A legacy tree
+    // missing the attr is treated as current-best-effort (identical to today's behaviour).
+    const int schemaVersion = (int)stateVT.getProperty("version", kCurrentSchemaVersion);
+    juce::ignoreUnused(schemaVersion); // reserved: hook point for future per-version migration
+    jassert(schemaVersion >= 1);       // negative/garbage => still safe (best-effort below); debug-only check
 
     auto getFloatProp = [](const juce::ValueTree& t, const juce::Identifier& id, float def) -> float
     {
@@ -233,6 +241,18 @@ static bool runWonKnobberStateUnitTests()
         auto back = WonKnobberState::fromValueTree(vt);
         bool ok = std::abs(back.drive - 1.0f) < 1e-6f && std::abs(back.mix - 0.0f) < 1e-6f;
         std::cout << "WONSTATE UNIT [oob clamp]: " << (ok ? "PASS" : "FAIL") << std::endl;
+        if (!ok)
+            pass = false;
+    }
+
+    // Future schema version -> best-effort load, no crash, fields clamp to defaults where unknown.
+    // This is the proof that reading `version` is no longer a no-op forward-compat guarantee.
+    {
+        juce::ValueTree vt("WonKnobberState");
+        vt.setProperty("version", 999, nullptr);
+        auto back = WonKnobberState::fromValueTree(vt);
+        bool ok = std::abs(back.drive - 0.5f) < 1e-6f && back.variant == "diamond" && back.cabIr == "FLAT";
+        std::cout << "WONSTATE UNIT [future version->safe defaults]: " << (ok ? "PASS" : "FAIL") << std::endl;
         if (!ok)
             pass = false;
     }

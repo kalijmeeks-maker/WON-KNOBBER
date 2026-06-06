@@ -11,6 +11,8 @@
 #include "gui/FlipTransition.h"
 #include "gui/RearPanelView.h"
 
+#include <memory>
+
 class WonKnobberAudioProcessorEditor : public juce::AudioProcessorEditor,
                                        private juce::Timer
 {
@@ -36,6 +38,12 @@ private:
     RearPanelView rear;       // rear service panel (declared before flipAnim so flipAnim paints on top)
     FlipTransition flipAnim;  // front<->rear flip overlay; sits above both sides while animating
     double lastTickSec { 0.0 }; // ballistics dt — first tick falls back to 1/30 s
+
+    // Param<->slider attachments for the drive/mix knobs. SliderParameterAttachment brackets every drag with
+    // beginChangeGesture()/endChangeGesture() so Touch/Latch automation records drags as contiguous segments.
+    // Declared AFTER processorRef + faceplate so they construct after / destruct before the sliders they bind.
+    std::unique_ptr<juce::SliderParameterAttachment> driveAttachment;
+    std::unique_ptr<juce::SliderParameterAttachment> mixAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WonKnobberAudioProcessorEditor)
 };
