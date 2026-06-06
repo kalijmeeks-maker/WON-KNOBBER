@@ -1,7 +1,7 @@
 # Project: WON-KNOBBER — JUCE Audio Plugin
 
 ## Targets (HARD CONSTRAINT)
-- **AU (Audio Unit v2/v3) + VST3 ONLY.** macOS only.
+- **AUv3 + VST3 ONLY.** macOS only. (NOT AUv2 / `.component` — per owner directive 2026-06-06.)
 - Do NOT add AAX, iLok, Windows, or Linux targets. No standalone unless asked.
 - C++20, JUCE 8.x, CMake (Pamplejuce-style), Catch2 for tests.
 
