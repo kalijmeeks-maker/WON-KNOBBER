@@ -8,6 +8,7 @@
     Usage:  WonKnobberRender [outputDir]   (default: ./render_out)
 */
 #include "gui/FaceplateView.h"
+#include "gui/RearPanelView.h"
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
@@ -66,6 +67,16 @@ int main(int argc, char** argv)
         fp.pushLevels(0.72f, 0.66f, 0.80f, 0.74f, 0.2f);
         fp.pushLevels(0.72f, 0.66f, 0.80f, 0.74f, 0.033f);
         writePNG(fp, outDir.getChildFile("front_voice_active.png"));
+    }
+
+    // Rear service panel (amber 612 plate) with cab + neural engaged on a non-default selection,
+    // so the live cab/neural wells + engage rockers/LEDs draw over the baked plate.
+    {
+        RearPanelView rp;
+        rp.setSize(960, 612);
+        rp.setCabState("VINTAGE_4X12", true);
+        rp.setNeuralState("TAPE", true);
+        writePNG(rp, outDir.getChildFile("rear_engaged.png"));
     }
 
     std::cout << "Done.\n";

@@ -157,6 +157,10 @@ void FaceplateView::resized()
     bypassRockerBounds = place(40, 536, 64, 49);
     aboutBtnBounds = place(930, 9, 20, 20);
 
+    // PROVISIONAL flip-to-rear hit-target in the free bottom-right corner (right of the transport tray).
+    // Final iced rose-gold corner affordance + exact placement land with Design's flip-spec.html.
+    flipBtnBounds = place(916, 533, 42, 60);
+
     // Sub-rects inside presetStrip for interactive elements + name LED.
     {
         const auto ps = presetStripBounds;
@@ -315,6 +319,14 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
     {
         if (onBypassToggled)
             onBypassToggled(!bypassed);
+        return;
+    }
+
+    // Provisional flip-to-rear affordance (bottom-right corner) → swap to the service panel.
+    if (flipBtnBounds.contains(pos))
+    {
+        if (onFlipToRear)
+            onFlipToRear();
         return;
     }
 
@@ -592,6 +604,7 @@ void FaceplateView::paintOverChildren(juce::Graphics& g)
     // Rocker stays crisp + lit on top — it's the control to re-energize.
     drawBypassRocker(g);
     drawAboutButton(g);
+    drawFlipButton(g);
 
     // About modal sits above everything (including the dim veil).
     if (aboutVisible)
@@ -666,6 +679,28 @@ void FaceplateView::drawAboutButton(juce::Graphics& g)
     g.setColour(juce::Colour(0xffc9c6be).withAlpha(aboutVisible ? 1.0f : 0.7f));
     g.setFont(juce::Font(juce::FontOptions(b.getHeight() * 0.72f).withStyle("Bold Italic")));
     g.drawText("i", aboutBtnBounds, juce::Justification::centred, false);
+}
+
+void FaceplateView::drawFlipButton(juce::Graphics& g)
+{
+    // PROVISIONAL: a recessed pad with a ⟳ glyph + "FLIP" label. Design's flip-spec.html replaces this
+    // with the iced rose-gold corner affordance (engraved gold ⟳ + FLIP) + exact placement.
+    if (flipBtnBounds.isEmpty())
+        return;
+
+    auto b = flipBtnBounds.toFloat().reduced(3.0f);
+    g.setColour(juce::Colour(0xff0f0f11).withAlpha(0.80f));
+    g.fillRoundedRectangle(b, 5.0f);
+    g.setColour(juce::Colour(0xffb98a4a).withAlpha(0.45f)); // rose-gold-ish hairline (provisional)
+    g.drawRoundedRectangle(b.reduced(0.5f), 5.0f, 0.8f);
+
+    const juce::Colour amber = bypassed ? juce::Colour(0xffa8632a) : juce::Colour(0xffe9b06a);
+    g.setColour(amber);
+    auto glyph = b.removeFromTop(b.getHeight() * 0.62f);
+    g.setFont(juce::Font(juce::FontOptions(glyph.getHeight() * 0.9f).withStyle("Bold")));
+    g.drawText(juce::String(juce::CharPointer_UTF8("\xe2\x86\xbb")), glyph, juce::Justification::centred, false); // ⟳
+    g.setFont(juce::Font(juce::FontOptions(juce::jmax(7.0f, b.getHeight() * 0.62f)).withStyle("Bold")));
+    g.drawText("FLIP", b, juce::Justification::centred, false);
 }
 
 juce::Rectangle<int> FaceplateView::computeAboutPanelBounds() const
