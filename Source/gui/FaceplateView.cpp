@@ -6,6 +6,7 @@
 */
 #include "FaceplateView.h"
 
+#include "AboutContent.h"
 #include "BinaryData.h"
 
 FaceplateView::FaceplateView()
@@ -68,9 +69,9 @@ FaceplateView::FaceplateView()
     };
     addAndMakeVisible(gemChip);
 
-    addAndMakeVisible (ioMeter);
-    addAndMakeVisible (statusLEDs);
-    addAndMakeVisible (dbReadout);
+    addAndMakeVisible(ioMeter);
+    addAndMakeVisible(statusLEDs);
+    addAndMakeVisible(dbReadout);
 
     // bypassLed: Phase 2b — not drawn over the photoreal chassis yet.
 }
@@ -180,8 +181,8 @@ void FaceplateView::resized()
 
         // "Modified" ember dot (Design spec): ~6px against the preset name's right edge, vertically
         // centred, with a ~20px transparent hit-target centred on it (6px is too small to click).
-        const int dotSize = juce::jmax(5, ps.getHeight() / 6);  // ~6px
-        const int hit = juce::jmax(16, ps.getHeight() / 2);     // ~20px hit-target
+        const int dotSize = juce::jmax(5, ps.getHeight() / 6); // ~6px
+        const int hit = juce::jmax(16, ps.getHeight() / 2);    // ~20px hit-target
         const int dotCx = presetNameBounds.getRight() - dotSize;
         const int dotCy = presetNameBounds.getCentreY();
         modifiedDotBounds = juce::Rectangle<int>(dotCx - hit / 2, dotCy - hit / 2, hit, hit);
@@ -339,9 +340,7 @@ void FaceplateView::mouseDown(const juce::MouseEvent& e)
     }
 
     // Preset name LED click (menu), but only if not hitting the chevrons or modified dot inside the strip.
-    if (presetNameBounds.contains(pos) &&
-        !chevLeftBounds.contains(pos) &&
-        !chevRightBounds.contains(pos) &&
+    if (presetNameBounds.contains(pos) && !chevLeftBounds.contains(pos) && !chevRightBounds.contains(pos) &&
         !modifiedDotBounds.contains(pos))
     {
         if (onPresetMenuRequested)
@@ -431,8 +430,7 @@ void FaceplateView::drawFooterBay(juce::Graphics& g)
 
     // Body: vertical dark gradient (top a touch darker than the bottom) → reads as a sunken trough.
     juce::ColourGradient body(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.44f), bay.getX(), bay.getY(),
-                              juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.20f), bay.getX(), bay.getBottom(),
-                              false);
+                              juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.20f), bay.getX(), bay.getBottom(), false);
     g.setGradientFill(body);
     g.fillRoundedRectangle(bay, radius);
 
@@ -445,8 +443,8 @@ void FaceplateView::drawFooterBay(juce::Graphics& g)
         bayPath.addRoundedRectangle(bay, radius);
         g.reduceClipRegion(bayPath);
 
-        const float bandY = bay.getY() + 2.0f * s;       // ~2px inset offset
-        const float bandH = juce::jmax(3.0f, 9.0f * s);  // ~9px blur emulated as band height
+        const float bandY = bay.getY() + 2.0f * s;      // ~2px inset offset
+        const float bandH = juce::jmax(3.0f, 9.0f * s); // ~9px blur emulated as band height
         juce::ColourGradient inset(juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.55f), bay.getX(), bandY,
                                    juce::Colour::fromFloatRGBA(0.0f, 0.0f, 0.0f, 0.0f), bay.getX(), bandY + bandH,
                                    false);
@@ -495,10 +493,12 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
         if (!presetNameBounds.isEmpty())
         {
             const float caretH = fontH * 0.6f;
-            const auto caretR = presetNameBounds.toFloat().withLeft(presetNameBounds.getRight() - caretH * 1.2f).withWidth(caretH);
+            const auto caretR =
+                presetNameBounds.toFloat().withLeft(presetNameBounds.getRight() - caretH * 1.2f).withWidth(caretH);
             g.setColour(juce::Colour(0xffc9c6be).withAlpha(0.7f));
             g.setFont(juce::Font(juce::FontOptions(caretH * 0.9f)));
-            g.drawText(juce::String(juce::CharPointer_UTF8("\xe2\x96\xbe")), caretR, juce::Justification::centred, false);
+            g.drawText(juce::String(juce::CharPointer_UTF8("\xe2\x96\xbe")), caretR, juce::Justification::centred,
+                       false);
         }
     }
 
@@ -519,8 +519,8 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
 
         // Radial ember: #ffd28a highlight at ~40%/35% → #ff8800 → #a35d00 rim.
         const juce::Point<float> hl(dot.getX() + dotD * 0.40f, dot.getY() + dotD * 0.35f);
-        juce::ColourGradient ember(juce::Colour(0xffffd28a), hl.x, hl.y, juce::Colour(0xffa35d00),
-                                   hl.x + dotD * 0.6f, hl.y, true);
+        juce::ColourGradient ember(juce::Colour(0xffffd28a), hl.x, hl.y, juce::Colour(0xffa35d00), hl.x + dotD * 0.6f,
+                                   hl.y, true);
         ember.addColour(0.5, juce::Colour(0xffff8800));
         g.setGradientFill(ember);
         g.fillEllipse(dot);
@@ -627,8 +627,8 @@ void FaceplateView::drawBypassRocker(juce::Graphics& g)
     // second hole. Flattened to a subtly top-lit raised cap so the rocker reads as a control
     // resting IN the one bay (the dot + BYPASS label below are unchanged). Shares the
     // transport-button palette so the row stays cohesive.
-    juce::ColourGradient cap(juce::Colour(0xff2a2c2e), b.getX(), b.getY(),
-                             juce::Colour(0xff161719), b.getX(), b.getBottom(), false);
+    juce::ColourGradient cap(juce::Colour(0xff2a2c2e), b.getX(), b.getY(), juce::Colour(0xff161719), b.getX(),
+                             b.getBottom(), false);
     g.setGradientFill(cap);
     g.fillRoundedRectangle(b, 4.0f);
     // Thin dark base edge where the cap meets the bay floor (grounds the cap; no recess look).
@@ -746,21 +746,10 @@ void FaceplateView::drawAboutPanel(juce::Graphics& g)
     g.setFont(juce::Font(juce::FontOptions(13.0f)));
     g.drawText("Photoreal one-knob saturation", line.removeFromTop(22), juce::Justification::topLeft, false);
 
-    // Credit block — verbatim per Design §3 (legally precise; hardcoded, NOT paraphrased).
-    // Two-license picture: the plugin is PolyForm-NC, the Airwindows core is MIT — both appear.
-    const juce::String copy = juce::String(juce::CharPointer_UTF8("\xc2\xa9"));      // ©
-    const juce::String dash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94"));  // —
-    const juce::String mid = juce::String(juce::CharPointer_UTF8("\xc2\xb7"));       // ·
-    const juce::String tm = juce::String(juce::CharPointer_UTF8("\xe2\x84\xa2"));    // ™
+    // Credit block — verbatim per Design §3, single-sourced in wk::about (legally precise, NOT
+    // paraphrased). Two-license picture: the plugin is PolyForm-NC, the Airwindows core is MIT.
     const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x96\xb8")); // ▸
-
-    juce::String credit;
-    credit << "Saturation core derived from Airwindows " << dash << " " << copy
-           << " 2018 Chris Johnson, used under the MIT licence.\n"
-           << "Cabinet impulse responses under their respective licences (see notices). Neural models " << copy
-           << " Kali Meeks.\n"
-           << "WON KNOBBER " << copy << " 2026 Kali Meeks " << mid
-           << " PolyForm Noncommercial 1.0.0. Built with JUCE 8. VST3" << tm << " Steinberg Media Technologies.";
+    const juce::String credit = wk::about::creditBlockText();
 
     // Hairline rule above the credit block (per §3 layout).
     line.removeFromTop(8);
@@ -791,7 +780,7 @@ juce::Rectangle<int> FaceplateView::computeLicencesLinkBounds() const
 juce::Rectangle<int> FaceplateView::computeLicencesPanelBounds() const
 {
     // Wider + taller than the About card so the full MIT text has room before it scrolls.
-    const int w = juce::jmin(680, getWidth() - 40);  // ~70% of the 960 face
+    const int w = juce::jmin(680, getWidth() - 40); // ~70% of the 960 face
     const int h = juce::jmin(480, getHeight() - 50);
     return juce::Rectangle<int>(0, 0, juce::jmax(140, w), juce::jmax(160, h)).withCentre(getLocalBounds().getCentre());
 }
@@ -888,41 +877,7 @@ void FaceplateView::drawLicencesPanel(juce::Graphics& g)
 
 juce::String FaceplateView::getLicencesBodyText() const
 {
-    // Hardcoded static text (matches how drawAboutPanel builds its credit block). The MIT licence
-    // below is copied VERBATIM from THIRD_PARTY_LICENSES.md; do not paraphrase. The trailing note
-    // covers per-IR / per-model notices, which are appended as those assets ship.
-    juce::String t;
-    t << "Airwindows (saturation algorithms)\n"
-      << "\n"
-      << "The saturation transfer functions in Source/dsp/AirwindowsShapers.h\n"
-      << "(Density3, Mojo, Spiral2 presence, PurestSaturation) are derived from Airwindows.\n"
-      << "\n"
-      << "Source: https://github.com/airwindows/airwindows\n"
-      << "Copyright (c) 2018 Chris Johnson\n"
-      << "License: MIT\n"
-      << "\n"
-      << "MIT License\n"
-      << "\n"
-      << "Copyright (c) 2018 Chris Johnson\n"
-      << "\n"
-      << "Permission is hereby granted, free of charge, to any person obtaining a copy\n"
-      << "of this software and associated documentation files (the \"Software\"), to deal\n"
-      << "in the Software without restriction, including without limitation the rights\n"
-      << "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
-      << "copies of the Software, and to permit persons to whom the Software is\n"
-      << "furnished to do so, subject to the following conditions:\n"
-      << "\n"
-      << "The above copyright notice and this permission notice shall be included in all\n"
-      << "copies or substantial portions of the Software.\n"
-      << "\n"
-      << "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
-      << "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
-      << "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
-      << "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
-      << "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
-      << "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
-      << "SOFTWARE.\n"
-      << "\n"
-      << "Per-IR and per-model notices are added here as those assets ship.";
-    return t;
+    // Single-sourced verbatim third-party licence body (Airwindows MIT + RTNeural BSD-3 + framework
+    // note + per-IR placeholder). Thin forwarder so the rear modal renders byte-identical legal text.
+    return wk::about::licencesBodyText();
 }
