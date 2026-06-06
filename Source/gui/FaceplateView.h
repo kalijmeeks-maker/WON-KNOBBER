@@ -93,6 +93,10 @@ public:
     // Bypass rocker: editor wires this to the processor; arg = new bypass state (true = bypassed).
     std::function<void(bool)> onBypassToggled;
 
+    // Flip-to-rear affordance (PROVISIONAL bottom-right corner pad, pending Design's
+    // flip-spec.html). Editor wires this to swap to the rear service panel.
+    std::function<void()> onFlipToRear;
+
     // Editor pushes the authoritative bypass state in (init + host-recall sync). Dims the faceplate.
     void setBypassed(bool b);
     bool isBypassed() const { return bypassed; }
@@ -142,9 +146,11 @@ private:
     bool licencesVisible{false}; // full third-party licence scroll, layered above the About card
     juce::Rectangle<int> bypassRockerBounds; // bypass_rocker anchor [41,531,64,49]
     juce::Rectangle<int> aboutBtnBounds;     // small 'i' affordance, top-right
+    juce::Rectangle<int> flipBtnBounds;      // PROVISIONAL flip-to-rear hit-target, bottom-right corner
 
     void drawBypassRocker(juce::Graphics& g);
     void drawAboutButton(juce::Graphics& g);
+    void drawFlipButton(juce::Graphics& g); // provisional ⟳ FLIP affordance (pending flip-spec.html)
     void drawAboutPanel(juce::Graphics& g);
     void drawLicencesPanel(juce::Graphics& g);
     juce::String getLicencesBodyText() const;                  // verbatim Airwindows MIT text + per-asset note

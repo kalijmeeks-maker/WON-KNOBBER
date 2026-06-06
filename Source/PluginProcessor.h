@@ -77,6 +77,20 @@ public:
     // Re-apply the snapshot of the last loaded voice, discarding manual edits (clears the dirty flag).
     void revertToLoadedPreset();
 
+    // Rear-panel cab/neural override (message thread only). Each updates the live selection AND pushes it
+    // to the DSP stage immediately (RT-safe via the stage's atomic gate / queued IR+model swap). loadedVoice
+    // is deliberately NOT touched, so an override that diverges from the loaded voice lights the modified dot
+    // (isDirty). Ids are machine ids: cab ∈ FLAT/STUDIO_RIBBON/VINTAGE_4X12/CONSOLE_BOX/OLD_RADIO/IRON_CORE,
+    // neural ∈ NONE/TAPE/VALVE/TRANSISTOR/IRON.
+    juce::String getCabIr() const noexcept { return currentCabIr; }
+    juce::String getNeuralModel() const noexcept { return currentNeuralModel; }
+    bool getCabEngage() const noexcept { return cabEngage; }
+    bool getNeuralEngage() const noexcept { return neuralEngage; }
+    void setCabIr(const juce::String& cabIrId);
+    void setNeuralModel(const juce::String& modelId);
+    void setCabEngage(bool shouldEngage);
+    void setNeuralEngage(bool shouldEngage);
+
     // Phase 2b: A/B compare slots (in-memory; saved in host state via slots in VT).
     char getActiveSlot() const;
     void setActiveSlot(

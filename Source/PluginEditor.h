@@ -8,6 +8,8 @@
 
 #include "PluginProcessor.h"
 #include "gui/FaceplateView.h"
+#include "gui/FlipTransition.h"
+#include "gui/RearPanelView.h"
 
 class WonKnobberAudioProcessorEditor : public juce::AudioProcessorEditor,
                                        private juce::Timer
@@ -26,8 +28,13 @@ private:
     void handlePresetMenuResult(int);
     void applyLoadedStateToGui();
 
+    // Flip front<->rear: snapshots the outgoing side, plays FlipTransition, shows the incoming side.
+    void startFlip(bool toRear);
+
     WonKnobberAudioProcessor& processorRef;
     FaceplateView faceplate;
+    RearPanelView rear;       // rear service panel (declared before flipAnim so flipAnim paints on top)
+    FlipTransition flipAnim;  // front<->rear flip overlay; sits above both sides while animating
     double lastTickSec { 0.0 }; // ballistics dt — first tick falls back to 1/30 s
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WonKnobberAudioProcessorEditor)

@@ -234,6 +234,36 @@ void WonKnobberAudioProcessor::revertToLoadedPreset()
     applyStateToParams(s);
 }
 
+void WonKnobberAudioProcessor::setCabIr(const juce::String& cabIrId)
+{
+    currentCabIr = cabIrId;
+    if (cabEngage)
+        convolution.setIr(currentCabIr); // only audible while engaged; selection persists either way
+}
+
+void WonKnobberAudioProcessor::setNeuralModel(const juce::String& modelId)
+{
+    currentNeuralModel = modelId;
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
+}
+
+void WonKnobberAudioProcessor::setCabEngage(bool shouldEngage)
+{
+    cabEngage = shouldEngage;
+    convolution.setEngaged(cabEngage);
+    if (cabEngage)
+        convolution.setIr(currentCabIr); // ensure the current IR is loaded when turning the stage on
+}
+
+void WonKnobberAudioProcessor::setNeuralEngage(bool shouldEngage)
+{
+    neuralEngage = shouldEngage;
+    neuralModel.setEngaged(neuralEngage);
+    if (neuralEngage)
+        neuralModel.setModel(currentNeuralModel);
+}
+
 namespace
 {
 // The 8 factory voices (Claude Design's drive/mix/gem map). Display name + embedded XML run
