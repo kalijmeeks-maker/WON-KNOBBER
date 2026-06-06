@@ -225,6 +225,16 @@ NEEDS:
 5. Optional: restart full relay loop (in RELAY LOOP pane: Ctrl+C then bash .../.agent-worktrees/.loop.sh) or run wkteam if tmux session idle. Human may stay on main after merge.
 Follow AGENTS exactly (explicit paths, own branch only, no main ops by agent, newest relay block last). Two ship items (IR compat + DAW spin) now cleared or queued for human. Lane ready.
 
+### 2026-06-07 FROM grok TO claude
+DID: Dropped the master package synthesis into the repo (updated CLAUDE.md with the provided content adapted for WON-KNOBBER; created docs/juce-critical-patterns.md; .claude/settings.json with PostToolUse clang-format + Stop verify.sh hook; scripts/verify.sh (executable) + rt_safety_check.sh + render_diff.sh stubs; .claude/commands/tdd.md and code-review.md). Also wrote the parallel worktree note into the context. All per the user-provided synthesis of the ten rounds. Explicit paths only.
+HANDOFF: CC — the new CLAUDE.md + critical-patterns + hooks + commands + verify.sh are now the operating spec. Use plan mode + /tdd + /code-review + the verify.sh gate on every stream. When ready for the next Ableton test iteration, drive the PR of the current gem-reversal + plate fixes (b45b915 lineage) + rebuild so the human can run the spin check on the real min-first BinaryData. The mix strip (Task 3) stays on hold until rig provided.
+NEEDS:
+1. CC: respect the new CLAUDE.md hard constraints (AU+VST3 macOS only, no scope creep) and run verify.sh after meaningful changes.
+2. Human (Kali): when CC signals a fresh rebuild with the reversed gems, do the in-DAW spin check (7 stones, clockwise = good). CDN upload parallel.
+3. Owner: JUCE licence + 1.0.0 bump when the gates are green.
+4. Grok: standing by for baked well measurements (to finish button bounds) or the mix rig (square 128² output). Will only work in UI/assets lane.
+The full synthesized operating system for the project is now in the tree. Follow AGENTS. Lane ready.
+
 ### 2026-06-06 FROM grok (UI lane)
 DID: Fixed floating dark button bodies over baked round wells on the front plate (per the diagnostic description).
 - In drawTransportTray: removed the recessed fillRoundedRectangle + drawRoundedRectangle for the 4 button bodies (S L ↺ R). The baked plate now supplies the round "sphere" wells inside the continuous footer trough (drawFooterBay). C++ only draws the labels centered in the wells.
@@ -251,3 +261,13 @@ NEEDS:
 4. Owner (Kali): JUCE licence basis decision and 0.1.0 → 1.0.0 bump at tag remain your calls.
 5. Grok: Mix-knob strip (Task 3) on hold until rig or pre-rendered square 128² file is provided (after gems/spin or in parallel). Standing by for baked-well measurements to finish exact button bounds alignment. Will only output square 128² per the approved brief.
 The reversal + plate fixes are in the tree and documented. Ready for the merge/rebuild signal. Follow AGENTS (explicit paths, own branch, no main ops by agent, newest relay block last). Lane ready.
+
+### 2026-06-07 FROM grok TO claude
+DID: Dropped the full master package synthesis (from the 10-round mining) into the repo at the project root and docs/. Updated CLAUDE.md (WON-KNOBBER-specific, AU+VST3 only, faceplate seated overlays, gem 120f min-first, DSP chain, oversampling limits, decoupled state). Created docs/juce-critical-patterns.md (19 RT/GUI/layout/state/host rules). Wired .claude/settings.json (PostToolUse clang-format, Stop verify.sh hook). Created scripts/verify.sh (executable, with ctest/pluginval/auval + calls to rt/render stubs) + rt_safety_check.sh (grep for new/malloc/lock/IO in processBlock) + render_diff.sh (stub for headless snapshot vs golden, with tolerance note). Created .claude/commands/tdd.md and code-review.md (exact as synthesized). Documented parallel worktree workflow in docs/parallel-worktree-workflow.md. All files via explicit git add (no -A). Prepares for 4-stream parallel (dsp/gui/state/build) with plan mode, /tdd, /code-review, verify.sh gates. Current tree state (gems reversed min-first, plate UI fixes, should-fixes in) is compatible.
+HANDOFF: CC — the new operating system (CLAUDE.md + patterns + hooks + commands + verify loop) is now live. Use it for all future work: plan mode + approve before code, /tdd for new behavior, /code-review with fresh context against plan, run ./scripts/verify.sh after changes. When ready for the next Ableton test iteration, drive the PR of the current gem-reversal + plate fixes (b45b915 lineage) + rebuild so the human can run the spin check on the real min-first BinaryData. The mix strip (Task 3) stays on hold until rig provided.
+NEEDS:
+1. CC: respect the new CLAUDE.md hard constraints (AU+VST3 macOS ONLY — no AAX/Windows/iLok/standalone creep) and run the full verify.sh (ctest + pluginval + auval + rt/render) on every stream before claiming done.
+2. Human (Kali): after CC signals a fresh rebuild with the reversed gems baked in (and plate fixes), perform the in-DAW spin check on all 7 stones (turn-up = clockwise = good). Report immediately. CDN of the 7 gems (manifest from prior) is your parallel web step.
+3. Owner (Kali): JUCE licence basis (AGPL vs commercial under PolyForm-NC) and 0.1.0→1.0.0 bump at tag — your calls when gates green.
+4. Grok: mix knob 128px square min-first strip (per brief) when rig or pre-rendered file provided (post-gems or parallel). Standing by for baked well measurements to finish exact transport/preset/bypass bounds alignment to the plate.
+The 10-round synthesis is now executable against the real WON-KNOBBER tree. Follow AGENTS exactly (explicit paths, own branch, no main ops by agent, newest relay last). Lane docs/assets/UI. Ready for parallel streams + next test iteration.
