@@ -135,9 +135,10 @@ void RearPanelView::resized()
     // control) — no dead rose-gold ring around the medallion.
     flipMedallionBounds = place(386, 170, 188, 188);
 
-    // Baked ABOUT text link at the RIGHT end of the io_trim_strip [217,499,423,41]. ABOUT is the left
-    // of the engraved ABOUT/MANUAL pair; MANUAL (the rightmost ~65px) stays an unwired baked placeholder.
-    aboutLinkBounds = place(510, 499, 65, 41);
+    // Baked ABOUT text link in the io_trim_strip [217,499,423,41]. The engraved "ABOUT" glyphs span
+    // ~x497-536; this rect covers them with margin and stops ~19px short of "MANUAL" (~x569-620), which
+    // stays an unwired baked placeholder (clicks on MANUAL must NOT open the modal).
+    aboutLinkBounds = place(488, 499, 62, 41);
 
     const int chev = juce::jmax(20, cabIrWellBounds.getHeight());
     cabPrevBounds = cabIrWellBounds.withWidth(chev);
