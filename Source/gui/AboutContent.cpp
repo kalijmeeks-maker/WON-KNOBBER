@@ -113,4 +113,15 @@ juce::String licencesBodyText()
       << "Per-IR and per-model notices are added here as those assets ship.";
     return t;
 }
+
+juce::String versionString()
+{
+    // Build version from the JUCE-generated macro (CMake project VERSION). Single-sourced so it
+    // auto-bumps at ship; never hardcode the version elsewhere.
+   #ifdef JucePlugin_VersionString
+    return "v" JucePlugin_VersionString;
+   #else
+    return "v0.1.0";
+   #endif
+}
 } // namespace wk::about

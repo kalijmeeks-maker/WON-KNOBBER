@@ -429,11 +429,7 @@ void RearPanelView::drawAboutPanel(juce::Graphics& g)
 
     auto inner = panel.reduced(24);
 
-#ifdef JucePlugin_VersionString
-    const juce::String ver = "v" JucePlugin_VersionString;
-#else
-    const juce::String ver = "v0.1.0";
-#endif
+    const juce::String ver = wk::about::versionString();
 
     auto line = inner;
     g.setColour(juce::Colour(0xfff0ede4));

@@ -22,4 +22,8 @@ juce::String licencesBodyText();
 // The <=4-line About-card credit block (Airwindows MIT / cabinet IRs / neural / PolyForm + VST3).
 // Assembled from the verbatim glyph literals; do not paraphrase.
 juce::String creditBlockText();
+
+// "v" + the build version (JucePlugin_VersionString, from the CMake project VERSION). Single-sourced
+// so it auto-bumps at ship; never hardcode the version anywhere else.
+juce::String versionString();
 } // namespace wk::about
