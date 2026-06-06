@@ -159,7 +159,8 @@ void FaceplateView::resized()
     footerBayBounds = place(37, 512, 886, 80);
 
     // Bypass rocker (footer-left) + small About 'i' affordance (top-right corner).
-    bypassRockerBounds = place(40, 536, 64, 49);
+    // 64x49 centred on the baked BYPASS dome at ref (59,567): x=59-32=27, y=567-24.5≈542.
+    bypassRockerBounds = place(27, 542, 64, 49);
     aboutBtnBounds = place(930, 9, 20, 20);
 
     // PROVISIONAL flip-to-rear hit-target in the free bottom-right corner (right of the transport tray).
@@ -168,37 +169,28 @@ void FaceplateView::resized()
 
     // Sub-rects inside presetStrip for interactive elements + name LED.
     {
-        const auto ps = presetStripBounds;
-        const int margin = juce::jmax(4, ps.getHeight() / 8);
-        const int chevW = juce::jmax(18, ps.getHeight() * 5 / 8);
-        const int chevH = ps.getHeight() - margin;
-        const int abW = juce::jmax(26, ps.getHeight() * 3 / 4);
-        const int gap = 3;
+        // Baked preset-strip wells measured on faceplate_pro_960x612.png (Design-confirmed, ref
+        // coords): prev chevron (141,575), preset-name trough [165,556,369,38], next chevron
+        // (559,575), A well (593,575), B well (617,575). Seat each overlay on its baked well (all
+        // centred at y=575) instead of subdividing presetStripBounds — the old subdivision sat at
+        // y≈550 (strip top 531) and floated the whole row ~25px above the baked wells.
+        const int wy = 575; // baked well centre-y (ref)
+        const int chevW = 22, chevH = 30;
+        chevLeftBounds = place(141 - chevW / 2, wy - chevH / 2, chevW, chevH);
+        presetNameBounds = place(165, 556, 369, 38);
+        chevRightBounds = place(559 - chevW / 2, wy - chevH / 2, chevW, chevH);
 
-        int x = ps.getX() + margin;
-        chevLeftBounds = juce::Rectangle<int>(x, ps.getY() + (ps.getHeight() - chevH) / 2, chevW, chevH);
-        x += chevW + gap;
+        const int abW = 24, abH = 30;
+        aButtonBounds = place(593 - abW / 2, wy - abH / 2, abW, abH);
+        bButtonBounds = place(617 - abW / 2, wy - abH / 2, abW, abH);
 
-        const int chevRightStartGuess = ps.getRight() - margin - (2 * abW + gap) - gap - chevW;
-        const int nameW = juce::jmax(80, chevRightStartGuess - x);
-        presetNameBounds = juce::Rectangle<int>(x, ps.getY() + margin / 2, nameW, ps.getHeight() - margin);
-
-        // "Modified" ember dot (Design spec): ~6px against the preset name's right edge, vertically
-        // centred, with a ~20px transparent hit-target centred on it (6px is too small to click).
-        const int dotSize = juce::jmax(5, ps.getHeight() / 6); // ~6px
-        const int hit = juce::jmax(16, ps.getHeight() / 2);    // ~20px hit-target
+        // "Modified" ember dot: ~6px against the preset name's right edge, vertically centred,
+        // with an ~18px transparent hit-target (6px is too small to click).
+        const int dotSize = 6;
+        const int hit = 18;
         const int dotCx = presetNameBounds.getRight() - dotSize;
         const int dotCy = presetNameBounds.getCentreY();
         modifiedDotBounds = juce::Rectangle<int>(dotCx - hit / 2, dotCy - hit / 2, hit, hit);
-
-        x += nameW + gap;
-
-        chevRightBounds = juce::Rectangle<int>(x, ps.getY() + (ps.getHeight() - chevH) / 2, chevW, chevH);
-        x += chevW + gap;
-
-        aButtonBounds = juce::Rectangle<int>(x, ps.getY() + margin / 2, abW, ps.getHeight() - margin);
-        x += abW + gap;
-        bButtonBounds = juce::Rectangle<int>(x, ps.getY() + margin / 2, abW, ps.getHeight() - margin);
     }
 
     // Sub-rects for the 4 transport affordance buttons (S L ↺ R).
@@ -208,20 +200,17 @@ void FaceplateView::resized()
     // baked wells; for now this aligns the labels/hit-targets much better than the old
     // wide rectangular subdivision and stops the visual offset.
     {
-        const auto tr = transportBounds;
-        const int tmargin = juce::jmax(3, tr.getHeight() / 10);
-        const int btnSize = tr.getHeight() - 2 * tmargin; // square for round wells
-        // Evenly space 4 squares across the transport width
-        const int totalButtonsW = 4 * btnSize + 3 * tmargin;
-        int tx = tr.getX() + (tr.getWidth() - totalButtonsW) / 2;
-        const int ty = tr.getY() + tmargin;
-        saveBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
-        tx += btnSize + tmargin;
-        loadBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
-        tx += btnSize + tmargin;
-        undoBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
-        tx += btnSize + tmargin;
-        randBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
+        // Baked transport domes measured from faceplate_pro_960x612.png (connected-components on
+        // the footer trough): four round wells centred at ref-x {684,731,794,841}, ref-y ≈ 575.
+        // The bake is NOT evenly spaced (2+3 grouped), so seat each label on its own dome centre
+        // rather than subdividing transportBounds — that is what made the old squares float.
+        const int domeCY = 575;
+        const int domeR = 21; // ~42px square seats on the ~40px round well
+        const int domeCX[4] = { 684, 731, 794, 841 };
+        saveBtnBounds = place(domeCX[0] - domeR, domeCY - domeR, 2 * domeR, 2 * domeR);
+        loadBtnBounds = place(domeCX[1] - domeR, domeCY - domeR, 2 * domeR, 2 * domeR);
+        undoBtnBounds = place(domeCX[2] - domeR, domeCY - domeR, 2 * domeR, 2 * domeR);
+        randBtnBounds = place(domeCX[3] - domeR, domeCY - domeR, 2 * domeR, 2 * domeR);
     }
 }
 
@@ -514,15 +503,11 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
     // strip-wide background fill, so the controls seat inside the one bay (no nested recess).
     const float h = (float)presetStripBounds.getHeight();
 
-    // Engraved/LED-style preset name display (recessed dark track + text in gui.md engravedText).
+    // Engraved/LED-style preset name display. The baked plate supplies the recessed name trough;
+    // C++ draws ONLY the live engraved text + caret (no body fill/border, which would float a dark
+    // box over the baked well — the "pasted-on" bug).
     if (!presetNameBounds.isEmpty())
     {
-        const auto nb = presetNameBounds.toFloat();
-        g.setColour(juce::Colour(0xff0a0a0c).withAlpha(0.88f));
-        g.fillRoundedRectangle(nb, 2.0f);
-        g.setColour(juce::Colour(0xff000000).withAlpha(0.55f));
-        g.drawRoundedRectangle(nb.reduced(0.5f), 2.0f, 0.6f);
-
         g.setColour(juce::Colour(0xffc9c6be)); // -- engravedText
         const float fontH = juce::jmax(8.0f, h * 0.52f);
         g.setFont(juce::Font(juce::FontOptions(fontH).withStyle("Bold")));
@@ -676,40 +661,26 @@ void FaceplateView::drawBypassRocker(juce::Graphics& g)
 
     const auto b = bypassRockerBounds.toFloat().reduced(2.0f);
 
-    // Rocker CAP seated inside drawFooterBay()'s trough. Previously this drew its OWN recessed
-    // well (dark fill + light inner stroke) which, sitting inside the new bay, read as a nested
-    // second hole. Flattened to a subtly top-lit raised cap so the rocker reads as a control
-    // resting IN the one bay (the dot + BYPASS label below are unchanged). Shares the
-    // transport-button palette so the row stays cohesive.
-    juce::ColourGradient cap(juce::Colour(0xff2a2c2e), b.getX(), b.getY(), juce::Colour(0xff161719), b.getX(),
-                             b.getBottom(), false);
-    g.setGradientFill(cap);
-    g.fillRoundedRectangle(b, 4.0f);
-    // Thin dark base edge where the cap meets the bay floor (grounds the cap; no recess look).
-    g.setColour(juce::Colour(0xff000000).withAlpha(0.45f));
-    g.drawRoundedRectangle(b.reduced(0.5f), 4.0f, 0.7f);
-    // 1px top-lip highlight on the cap's crown (catches light like the bay's own lip).
+    // The baked plate supplies the rocker dome/well. C++ draws ONLY the live overlays (reflective
+    // top-lip glint + the lit/dark telltale dot + the state-keyed BYPASS label). The cap body fill
+    // and border were removed: drawn over the baked well they read as a dark shape floating above
+    // it (the "pasted-on" bug). Centred on the baked dome via bypassRockerBounds.
+    // 1px top-lip glint where the recess catches light (pure reflective highlight, not a control face).
     g.setColour(juce::Colour::fromFloatRGBA(1.0f, 1.0f, 1.0f, 0.06f));
     g.drawLine(b.getX() + 4.0f, b.getY() + 1.0f, b.getRight() - 4.0f, b.getY() + 1.0f, 1.0f);
 
-    // Telltale dot: amber glow when BYPASSED (warns the signal is dry); dark when engaged.
-    const float dotR = juce::jmin(b.getWidth(), b.getHeight()) * 0.20f;
-    const juce::Point<float> dotC(b.getCentreX(), b.getY() + b.getHeight() * 0.34f);
-    const auto dot = juce::Rectangle<float>(dotR * 2.0f, dotR * 2.0f).withCentre(dotC);
-
+    // Telltale: a small amber light seated ON the baked dome (rocker centre) when BYPASSED. When
+    // engaged we draw NOTHING — the baked dome IS the engaged visual; a second filled ellipse over
+    // it produced the doubled-dome "snowman" floating bug (it was offset to y=getY()+h*0.34).
     if (bypassed)
     {
+        const float dotR = juce::jmin(b.getWidth(), b.getHeight()) * 0.14f;
+        const auto dot = juce::Rectangle<float>(dotR * 2.0f, dotR * 2.0f)
+                             .withCentre({ b.getCentreX(), b.getCentreY() });
         g.setColour(juce::Colour(0xffffa726).withAlpha(0.30f));
         g.fillEllipse(dot.expanded(dotR * 0.9f));
         g.setColour(juce::Colour(0xffffb74d));
         g.fillEllipse(dot);
-    }
-    else
-    {
-        g.setColour(juce::Colour(0xff2a2c2e));
-        g.fillEllipse(dot);
-        g.setColour(juce::Colour(0xff000000).withAlpha(0.5f));
-        g.drawEllipse(dot, 0.6f);
     }
 
     g.setColour(bypassed ? juce::Colour(0xffffd9a0) : juce::Colour(0xff9aa0a3));
@@ -737,16 +708,14 @@ void FaceplateView::drawAboutButton(juce::Graphics& g)
 
 void FaceplateView::drawFlipButton(juce::Graphics& g)
 {
-    // PROVISIONAL: a recessed pad with a ⟳ glyph + "FLIP" label. Design's flip-spec.html replaces this
-    // with the iced rose-gold corner affordance (engraved gold ⟳ + FLIP) + exact placement.
+    // PROVISIONAL placement [916,533,42,60], pending Design's flip-spec.html. C++ draws ONLY the live
+    // overlays (⟳ glyph + "FLIP" label). The pad body fill + hairline border were removed: drawn with
+    // no measured baked well they floated a dark shape in the corner (the "pasted-on" bug). Once
+    // flip-spec.html lands, seat these overlays on the baked corner affordance's measured centre.
     if (flipBtnBounds.isEmpty())
         return;
 
     auto b = flipBtnBounds.toFloat().reduced(3.0f);
-    g.setColour(juce::Colour(0xff0f0f11).withAlpha(0.80f));
-    g.fillRoundedRectangle(b, 5.0f);
-    g.setColour(juce::Colour(0xffb98a4a).withAlpha(0.45f)); // rose-gold-ish hairline (provisional)
-    g.drawRoundedRectangle(b.reduced(0.5f), 5.0f, 0.8f);
 
     const juce::Colour amber = bypassed ? juce::Colour(0xffa8632a) : juce::Colour(0xffe9b06a);
     g.setColour(amber);
