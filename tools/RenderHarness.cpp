@@ -79,6 +79,20 @@ int main(int argc, char** argv)
         writePNG(rp, outDir.getChildFile("rear_engaged.png"));
     }
 
+    // Rear with the About card open OVER the dimmed rear face (the ship-required MIT/Airwindows +
+    // RTNeural notice entry point on the rear). Then the full licences scroll layered on top.
+    {
+        RearPanelView rp;
+        rp.setSize(960, 612);
+        rp.setCabState("VINTAGE_4X12", true);
+        rp.setNeuralState("TAPE", true);
+        rp.openAboutModal(false);
+        writePNG(rp, outDir.getChildFile("rear_about.png"));
+
+        rp.openAboutModal(true);
+        writePNG(rp, outDir.getChildFile("rear_licences.png"));
+    }
+
     std::cout << "Done.\n";
     return 0;
 }

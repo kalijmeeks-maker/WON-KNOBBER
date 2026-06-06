@@ -4,6 +4,7 @@
 */
 #include "RearPanelView.h"
 
+#include "AboutContent.h"
 #include "BinaryData.h"
 
 namespace
@@ -22,11 +23,16 @@ RearPanelView::RearPanelView()
 {
     rearPlate = juce::ImageCache::getFromMemory(BinaryData::rearpanelbackground960x612_png,
                                                 BinaryData::rearpanelbackground960x612_pngSize);
+
+    // Allow keyboard focus so the About/Licences modal can field Esc (focus is grabbed only while
+    // the modal is open and given back on close, so it never steals focus during normal use).
+    setWantsKeyboardFocus(true);
 }
 
 const juce::StringArray& RearPanelView::cabIds()
 {
-    static const juce::StringArray ids{"FLAT", "STUDIO_RIBBON", "VINTAGE_4X12", "CONSOLE_BOX", "OLD_RADIO", "IRON_CORE"};
+    static const juce::StringArray ids{"FLAT",        "STUDIO_RIBBON", "VINTAGE_4X12",
+                                       "CONSOLE_BOX", "OLD_RADIO",     "IRON_CORE"};
     return ids;
 }
 
@@ -100,6 +106,14 @@ void RearPanelView::setBypassed(bool b)
     repaint();
 }
 
+void RearPanelView::openAboutModal(bool showLicences)
+{
+    aboutVisible = true;
+    licencesVisible = showLicences;
+    licencesScrollY = 0;
+    repaint();
+}
+
 void RearPanelView::resized()
 {
     const float sx = (float)getWidth() / (float)kRefW;
@@ -121,6 +135,11 @@ void RearPanelView::resized()
     // control) — no dead rose-gold ring around the medallion.
     flipMedallionBounds = place(386, 170, 188, 188);
 
+    // Baked ABOUT text link in the io_trim_strip [217,499,423,41]. The engraved "ABOUT" glyphs span
+    // ~x497-536; this rect covers them with margin and stops ~19px short of "MANUAL" (~x569-620), which
+    // stays an unwired baked placeholder (clicks on MANUAL must NOT open the modal).
+    aboutLinkBounds = place(488, 499, 62, 41);
+
     const int chev = juce::jmax(20, cabIrWellBounds.getHeight());
     cabPrevBounds = cabIrWellBounds.withWidth(chev);
     cabNextBounds = cabIrWellBounds.withWidth(chev).withRightX(cabIrWellBounds.getRight());
@@ -141,8 +160,8 @@ void RearPanelView::drawEngage(juce::Graphics& g, juce::Rectangle<int> rocker, j
     auto cap = rb.reduced(2.0f).withWidth(rb.getWidth() * 0.5f - 2.0f);
     if (on)
         cap = cap.withX(rb.getCentreX());
-    const juce::Colour capCol = on ? (bypassed ? juce::Colour(0xffa8632a) : juce::Colour(0xffFE9A00))
-                                   : juce::Colour(0xff5a6066);
+    const juce::Colour capCol =
+        on ? (bypassed ? juce::Colour(0xffa8632a) : juce::Colour(0xffFE9A00)) : juce::Colour(0xff5a6066);
     g.setColour(capCol);
     g.fillRoundedRectangle(cap, 3.0f);
 
@@ -217,6 +236,56 @@ void RearPanelView::mouseDown(const juce::MouseEvent& e)
 {
     const auto pos = e.getPosition();
 
+    // Licences scroll sits ON TOP of the About card — handled first so it captures clicks while open.
+    // Its close affordance OR a click outside its panel dismisses it back to the About card.
+    if (licencesVisible)
+    {
+        const auto panel = computeLicencesPanelBounds();
+        const auto closeBox = juce::Rectangle<int>(panel.getRight() - 30, panel.getY() + 10, 20, 20);
+        if (closeBox.contains(pos) || !panel.contains(pos))
+        {
+            licencesVisible = false;
+            repaint();
+        }
+        return;
+    }
+
+    // About modal is top-most + captures all clicks while open. Geometry is recomputed
+    // deterministically (same source as drawAboutPanel) so hit-testing never depends on a paint.
+    if (aboutVisible)
+    {
+        const auto panel = computeAboutPanelBounds();
+        const auto closeBox = juce::Rectangle<int>(panel.getRight() - 26, panel.getY() + 8, 18, 18);
+
+        // "View full licences ▸" link → open the scrollable full-text licences modal.
+        if (computeLicencesLinkBounds().contains(pos))
+        {
+            licencesVisible = true;
+            licencesScrollY = 0;
+            repaint();
+            return;
+        }
+
+        if (closeBox.contains(pos) || !panel.contains(pos))
+        {
+            aboutVisible = false;
+            giveAwayKeyboardFocus(); // release the focus grabbed when the modal opened
+            repaint();
+        }
+        return;
+    }
+
+    // Baked ABOUT text link (right end of the io_trim_strip) opens the About card OVER the rear face.
+    // MANUAL (to its right) is intentionally NOT hit-tested — it stays an unwired baked placeholder.
+    if (aboutLinkBounds.contains(pos))
+    {
+        aboutVisible = true;
+        licencesScrollY = 0;
+        grabKeyboardFocus(); // so Esc reaches keyPressed while the modal is open
+        repaint();
+        return;
+    }
+
     if (flipMedallionBounds.contains(pos))
     {
         if (onFlipToFront)
@@ -260,5 +329,210 @@ void RearPanelView::mouseDown(const juce::MouseEvent& e)
         if (onNeuralModelChanged)
             onNeuralModelChanged(cycle(neuralIds(), neuralModelId, +1));
         return;
+    }
+}
+
+//==============================================================================
+// About/Licences modal — self-contained on the rear so the ship-required MIT/Airwindows +
+// RTNeural notices have an entry point while the front (and its modal) is hidden. Mirrors the
+// front geometry/behaviour exactly; legal copy comes from wk::about (single source of truth).
+
+void RearPanelView::paintOverChildren(juce::Graphics& g)
+{
+    // About modal sits above everything (including the bypass wash) so it dims the rear face.
+    if (aboutVisible)
+        drawAboutPanel(g);
+
+    // Full third-party licences scroll sits above the About card.
+    if (licencesVisible)
+        drawLicencesPanel(g);
+}
+
+bool RearPanelView::keyPressed(const juce::KeyPress& key)
+{
+    // Esc steps Licences -> About -> close (matches the Design spec). Only acts while the modal is open.
+    if (key == juce::KeyPress::escapeKey)
+    {
+        if (licencesVisible)
+        {
+            licencesVisible = false;
+            repaint();
+            return true;
+        }
+        if (aboutVisible)
+        {
+            aboutVisible = false;
+            giveAwayKeyboardFocus();
+            repaint();
+            return true;
+        }
+    }
+    return juce::Component::keyPressed(key);
+}
+
+void RearPanelView::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
+{
+    if (licencesVisible)
+    {
+        // Scroll the licence body; deltaY > 0 means wheel-up (content moves down → reduce offset).
+        const int step = juce::roundToInt(wheel.deltaY * -120.0f);
+        licencesScrollY = juce::jlimit(0, licencesMaxScrollY, licencesScrollY + step);
+        repaint();
+        return;
+    }
+
+    juce::Component::mouseWheelMove(e, wheel);
+}
+
+juce::Rectangle<int> RearPanelView::computeAboutPanelBounds() const
+{
+    const int w = juce::jmin(580, getWidth() - 60); // ~60% of the 960 face, per Design §3
+    const int h = juce::jmin(360, getHeight() - 90);
+    return juce::Rectangle<int>(0, 0, juce::jmax(120, w), juce::jmax(120, h)).withCentre(getLocalBounds().getCentre());
+}
+
+juce::Rectangle<int> RearPanelView::computeLicencesLinkBounds() const
+{
+    // Mirrors the bottom strip used by drawAboutPanel: inner = panel.reduced(24), and the link
+    // occupies the bottom 20px of that inner rect (only vertical removeFrom* mutate `line`, so the
+    // horizontal extent stays equal to inner's). Recomputed deterministically — never paint-dependent.
+    const auto inner = computeAboutPanelBounds().reduced(24);
+    return juce::Rectangle<int>(inner.getX(), inner.getBottom() - 20, inner.getWidth(), 20);
+}
+
+juce::Rectangle<int> RearPanelView::computeLicencesPanelBounds() const
+{
+    // Wider + taller than the About card so the full licence text has room before it scrolls.
+    const int w = juce::jmin(680, getWidth() - 40); // ~70% of the 960 face
+    const int h = juce::jmin(480, getHeight() - 50);
+    return juce::Rectangle<int>(0, 0, juce::jmax(140, w), juce::jmax(160, h)).withCentre(getLocalBounds().getCentre());
+}
+
+void RearPanelView::drawAboutPanel(juce::Graphics& g)
+{
+    // Scrim behind the modal (dims the rear face).
+    g.setColour(juce::Colours::black.withAlpha(0.6f));
+    g.fillRect(getLocalBounds());
+
+    const auto panel = computeAboutPanelBounds();
+    const auto pf = panel.toFloat();
+    g.setColour(juce::Colour(0xff17181b));
+    g.fillRoundedRectangle(pf, 8.0f);
+    g.setColour(juce::Colour(0xffaa5500).withAlpha(0.6f)); // amber accent edge
+    g.drawRoundedRectangle(pf.reduced(0.5f), 8.0f, 1.2f);
+
+    // Close box (top-right) — geometry mirrors mouseDown's hit-test exactly.
+    const auto closeBox = juce::Rectangle<int>(panel.getRight() - 26, panel.getY() + 8, 18, 18);
+    g.setColour(juce::Colour(0xff9aa0a3));
+    g.setFont(juce::Font(juce::FontOptions(16.0f).withStyle("Bold")));
+    g.drawText(juce::String(juce::CharPointer_UTF8("\xc3\x97")), closeBox, juce::Justification::centred, false); // ×
+
+    auto inner = panel.reduced(24);
+
+    const juce::String ver = wk::about::versionString();
+
+    auto line = inner;
+    g.setColour(juce::Colour(0xfff0ede4));
+    g.setFont(juce::Font(juce::FontOptions(24.0f).withStyle("Bold")));
+    g.drawText("WON-KNOBBER  " + ver, line.removeFromTop(34), juce::Justification::topLeft, false);
+
+    g.setColour(juce::Colour(0xff9aa0a3));
+    g.setFont(juce::Font(juce::FontOptions(13.0f)));
+    g.drawText("Photoreal one-knob saturation", line.removeFromTop(22), juce::Justification::topLeft, false);
+
+    // Credit block — verbatim, single-sourced in wk::about (legally precise, NOT paraphrased).
+    const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x96\xb8")); // ▸
+    const juce::String credit = wk::about::creditBlockText();
+
+    // Hairline rule above the credit block (per §3 layout).
+    line.removeFromTop(8);
+    g.setColour(juce::Colour(0xff3a3d3e));
+    g.drawLine((float)line.getX(), (float)line.getY(), (float)line.getRight(), (float)line.getY(), 1.0f);
+    line.removeFromTop(10);
+
+    g.setColour(juce::Colour(0xffc9c6be));
+    g.setFont(juce::Font(juce::FontOptions(12.0f)));
+    g.drawMultiLineText(credit, line.getX(), line.getY() + 12, line.getWidth(), juce::Justification::topLeft);
+
+    // Single amber "View full licences" link → opens the full licences scroll. Hit-target computed
+    // deterministically via computeLicencesLinkBounds() (same geometry).
+    g.setColour(juce::Colour(0xffffb74d));
+    g.setFont(juce::Font(juce::FontOptions(12.0f).withStyle("Bold")));
+    g.drawText("View full licences " + arrow, computeLicencesLinkBounds(), juce::Justification::bottomLeft, false);
+}
+
+void RearPanelView::drawLicencesPanel(juce::Graphics& g)
+{
+    // Scrim behind the licences modal (a touch darker than the About scrim since it layers on top).
+    g.setColour(juce::Colours::black.withAlpha(0.72f));
+    g.fillRect(getLocalBounds());
+
+    const auto panel = computeLicencesPanelBounds();
+    const auto pf = panel.toFloat();
+    g.setColour(juce::Colour(0xff131417));
+    g.fillRoundedRectangle(pf, 8.0f);
+    g.setColour(juce::Colour(0xffaa5500).withAlpha(0.6f)); // amber accent edge
+    g.drawRoundedRectangle(pf.reduced(0.5f), 8.0f, 1.2f);
+
+    // Title.
+    auto header = panel.reduced(24, 18);
+    auto titleRow = header.removeFromTop(28);
+    g.setColour(juce::Colour(0xfff0ede4));
+    g.setFont(juce::Font(juce::FontOptions(20.0f).withStyle("Bold")));
+    g.drawText("Third-party licences", titleRow, juce::Justification::topLeft, false);
+
+    // Close box (top-right) — geometry mirrors mouseDown's hit-test exactly.
+    const auto closeBox = juce::Rectangle<int>(panel.getRight() - 30, panel.getY() + 10, 20, 20);
+    g.setColour(juce::Colour(0xff9aa0a3));
+    g.setFont(juce::Font(juce::FontOptions(18.0f).withStyle("Bold")));
+    g.drawText(juce::String(juce::CharPointer_UTF8("\xc3\x97")), closeBox, juce::Justification::centred, false); // ×
+
+    // Hairline rule under the title.
+    header.removeFromTop(8);
+    g.setColour(juce::Colour(0xff3a3d3e));
+    g.drawLine((float)header.getX(), (float)header.getY(), (float)header.getRight(), (float)header.getY(), 1.0f);
+    header.removeFromTop(10);
+
+    // Scrollable body region: clip to it, then draw the (offset) full licence text.
+    const auto body = header;
+    const float bodyFont = 12.0f;
+    const float lineH = bodyFont * 1.4f;
+
+    // Full third-party licence body, verbatim from wk::about (single source of truth).
+    const juce::String licenceBody = wk::about::licencesBodyText();
+
+    // Word-wrap the body to the body width so we can measure its true rendered height for clamping.
+    juce::GlyphArrangement glyphs;
+    glyphs.addJustifiedText(juce::Font(juce::FontOptions(bodyFont)), licenceBody, (float)body.getX(),
+                            (float)body.getY() + bodyFont, (float)body.getWidth(), juce::Justification::topLeft);
+    const float textBottom = glyphs.getBoundingBox(0, -1, true).getBottom();
+    const int contentH = juce::jmax(0, juce::roundToInt(textBottom - (float)body.getY()) + juce::roundToInt(lineH));
+
+    licencesMaxScrollY = juce::jmax(0, contentH - body.getHeight());
+    licencesScrollY = juce::jlimit(0, licencesMaxScrollY, licencesScrollY);
+
+    {
+        juce::Graphics::ScopedSaveState clip(g);
+        g.reduceClipRegion(body);
+        g.setColour(juce::Colour(0xffc9c6be));
+        g.setFont(juce::Font(juce::FontOptions(bodyFont)));
+        g.drawMultiLineText(licenceBody, body.getX(), body.getY() + juce::roundToInt(bodyFont) - licencesScrollY,
+                            body.getWidth(), juce::Justification::topLeft);
+    }
+
+    // Scroll affordance: a slim track + thumb on the right edge when the content overflows.
+    if (licencesMaxScrollY > 0)
+    {
+        const int trackW = 4;
+        const auto track = juce::Rectangle<int>(body.getRight() - trackW, body.getY(), trackW, body.getHeight());
+        g.setColour(juce::Colour(0xff2a2c2e));
+        g.fillRoundedRectangle(track.toFloat(), 2.0f);
+
+        const float frac = (float)body.getHeight() / (float)(body.getHeight() + licencesMaxScrollY);
+        const int thumbH = juce::jmax(24, juce::roundToInt((float)body.getHeight() * frac));
+        const float scrolled = (float)licencesScrollY / (float)licencesMaxScrollY;
+        const int thumbY = body.getY() + juce::roundToInt(scrolled * (float)(body.getHeight() - thumbH));
+        g.setColour(juce::Colour(0xff9aa0a3).withAlpha(0.85f));
+        g.fillRoundedRectangle(juce::Rectangle<int>(track.getX(), thumbY, trackW, thumbH).toFloat(), 2.0f);
     }
 }
