@@ -224,3 +224,30 @@ NEEDS:
 4. (if re-render needed for any gem): use external rigs (knob_diamond.blend reconciled gems/ring), match determinism gate + visuals, replace in sprites/ (same names), re-verify gate + read, explicit add/commit on agent/grok.
 5. Optional: restart full relay loop (in RELAY LOOP pane: Ctrl+C then bash .../.agent-worktrees/.loop.sh) or run wkteam if tmux session idle. Human may stay on main after merge.
 Follow AGENTS exactly (explicit paths, own branch only, no main ops by agent, newest relay block last). Two ship items (IR compat + DAW spin) now cleared or queued for human. Lane ready.
+
+### 2026-06-06 FROM grok (UI lane)
+DID: Fixed floating dark button bodies over baked round wells on the front plate (per the diagnostic description).
+- In drawTransportTray: removed the recessed fillRoundedRectangle + drawRoundedRectangle for the 4 button bodies (S L ↺ R). The baked plate now supplies the round "sphere" wells inside the continuous footer trough (drawFooterBay). C++ only draws the labels centered in the wells.
+- Updated the 4 transport button hit-areas + label rects in resized() to be square (btnSize = height - margins, evenly spaced). This better matches round wells than the old wide rectangular subdivision and reduces offset.
+- In drawPresetStrip (drawAB): removed the fillRoundedRectangle + draw for the A/B "squares". Only the letters are drawn now (lit state via text brightness). The baked plate provides the visual for those elements too.
+- Bypass rocker left as the current "cap" (already flattened in prior Phase 2b work to sit in the trough).
+- No change to preset name LED dark track (may be intentional engraving + overlay) or other elements.
+- The old transportBounds container and footerBay remain; individual button alignment will be pixel-perfect once precise baked well centers/sizes are provided.
+- Explicit `git add Source/gui/FaceplateView.cpp` only. No other files.
+HANDOFF: CC — the visual mismatch (floating squares over baked spheres) for transport buttons and preset A/B is fixed at the drawing level. When you have the precise measurements of the 4 round transport wells (and bypass/preset elements) from the baked plate, hand them over (x,y,radius or bounds in 960x612 ref) so we can set exact saveBtnBounds etc. (and bypassRockerBounds) to seat the labels/hit-targets perfectly in the baked geometry. The current square subdivision is a good interim alignment.
+NEEDS:
+1. Human/Design: provide the precise baked well measurements for the 4 transport buttons (and bypass rocker + preset elements if they also need exact rects). E.g. centers or bounding rects for each round sphere in the 960x612 plate.
+2. Once measurements arrive: update the individual *BtnBounds (and bypassRockerBounds) using place() or direct values centered on the baked wells. Hit areas can stay rects (or become ellipses) matching the visible well size.
+3. After bounds update + any small label font tweak: re-render to confirm labels sit cleanly inside the baked round wells with no offset or floating bodies.
+The fix removes the most obvious "C++ drawing on top of baked plate" artifact for the lower controls while we wait for exact numbers. Lane UI (FaceplateView drawing + layout). Ready.
+
+### 2026-06-07 10:40 FROM grok TO claude
+DID: Latest UI lane work landed on feat/gems-min-first (reversal of all 7 hero gems to uniform min-first at bc4c9f9 + follow-ups; footer/plate alignment fixes at 2d84214 + 6b36814 — removed floating dark button bodies for transport S/L/↺/R and preset A/B; now only labels drawn on the baked round wells/spheres; transport hit-areas made square as interim alignment). All changes are strictly docs/assets/sprites + FaceplateView drawing/layout. No Source/Presets/Processor/state touched. Gems are now min-first per byte-level verification + crops (as documented in previous blocks and the GROK_WORKORDER response). The 7 strips + CMake BinaryData list are ready for rebuild.
+HANDOFF: The should-fix cluster is in (87a2be0). Please PR the gem-reversal + plate-alignment changes from feat/gems-min-first onto the active line (or main once protected-merge rules allow). Rebuild Release so juce_add_binary_data picks up the reversed min-first 256px strips and the drawing fixes (no more floating squares). Confirm the new post-reversal SHAs appear in the resulting binary (e.g. via strings on the artefact or BinaryData inspection). Reinstall the Release VST3/AU. Explicitly signal when a fresh build is installed so the human can run the in-DAW spin check on real reversed art. CDN upload of the 6 hero gems remains a parallel web-only step (does not affect the plugin binary or the spin check).
+NEEDS:
+1. CC: Drive the PR of the gem + UI changes. Rebuild Release. Confirm new SHAs in BinaryData. Reinstall. Signal "rebuild ready for spin check" when done.
+2. Human (Kali): Perform the in-DAW gem spin check **only after** the explicit signal from CC that the rebuilt binary is installed. Cycle all 7 stones while turning Drive up; confirm turn-up = clockwise (min-first) on every stone. Report direction per stone. (The previous byte analysis + reversal is high-confidence but the live spin check on the actual rebuilt plugin is the arbiter.)
+3. Human: The CDN upload of the final 7 gems (using the manifest + SHAs from the prior block) can happen in parallel — it only feeds the web prototype picker.
+4. Owner (Kali): JUCE licence basis decision and 0.1.0 → 1.0.0 bump at tag remain your calls.
+5. Grok: Mix-knob strip (Task 3) on hold until rig or pre-rendered square 128² file is provided (after gems/spin or in parallel). Standing by for baked-well measurements to finish exact button bounds alignment. Will only output square 128² per the approved brief.
+The reversal + plate fixes are in the tree and documented. Ready for the merge/rebuild signal. Follow AGENTS (explicit paths, own branch, no main ops by agent, newest relay block last). Lane ready.
