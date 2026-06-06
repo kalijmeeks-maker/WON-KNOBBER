@@ -85,3 +85,24 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
+---
+
+## WON-KNOBBER Cab IRs (in-house)
+
+Six minimum-phase mono cab impulse responses (48 kHz, 24-bit WAV, 1536–2048 taps).
+
+- Producer: Grok / WON Producer (Tier A, in-house, 2026-06-02)
+- Method: synthesized from locked voice magnitude targets + early-reflection clusters (see docs/voice-cab-neural-map.md for per-voice assignment and docs/WON_IR_capture_log_2026-06-02.md for full log).
+- Files (locked names, replaceable by real mic'd under same filename with no code changes):
+  - ir_flat.wav — FLAT (CONSOLE GLUE anchor, 2048 taps)
+  - ir_studio_ribbon.wav — STUDIO RIBBON (TAPE HEAD / VELVET, 2048 taps)
+  - ir_vintage_4x12.wav — VINTAGE 4×12 (FURNACE / DIODE BITE, 2048 taps)
+  - ir_console_box.wav — CONSOLE BOX (TUBE WARM, 2048 taps)
+  - ir_old_radio.wav — OLD RADIO (SUNDAY DRIVE, 1536 taps)
+  - ir_iron_core.wav — IRON CORE (TRANSFORMER, 2048 taps)
+- Regenerate: `python3 Scripts/generate_cab_ir_captures.py`
+- Licence / compatibility: In-house. Explicitly "PolyForm Noncommercial plugin" (Resources/IRs/LICENSE_IRS.txt). Fully redistributable under the project's PolyForm-NC terms; no external third-party retail IR licence conflicts. No ship blockers.
+
+(Closes the last 1.0 licence item for the six cab IRs. Notices also appear in the shipped About/Licences modal.)
+
+
