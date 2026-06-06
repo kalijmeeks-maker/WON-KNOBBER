@@ -201,21 +201,27 @@ void FaceplateView::resized()
         bButtonBounds = juce::Rectangle<int>(x, ps.getY() + margin / 2, abW, ps.getHeight() - margin);
     }
 
-    // Sub-rects inside transportBounds for 4 affordance buttons (S L U RND).
+    // Sub-rects for the 4 transport affordance buttons (S L ↺ R).
+    // The baked plate has 4 round "sphere" wells inside the footer trough.
+    // Make the C++ hit-areas + label rects square (to match round wells) and evenly spaced
+    // within the transport area. Precise centers will come from Design's measurement of the
+    // baked wells; for now this aligns the labels/hit-targets much better than the old
+    // wide rectangular subdivision and stops the visual offset.
     {
         const auto tr = transportBounds;
         const int tmargin = juce::jmax(3, tr.getHeight() / 10);
-        const int btnW = (tr.getWidth() - 5 * tmargin) / 4;
-        const int btnH = tr.getHeight() - 2 * tmargin;
+        const int btnSize = tr.getHeight() - 2 * tmargin; // square for round wells
+        // Evenly space 4 squares across the transport width
+        const int totalButtonsW = 4 * btnSize + 3 * tmargin;
+        int tx = tr.getX() + (tr.getWidth() - totalButtonsW) / 2;
         const int ty = tr.getY() + tmargin;
-        int tx = tr.getX() + tmargin;
-        saveBtnBounds = juce::Rectangle<int>(tx, ty, btnW, btnH);
-        tx += btnW + tmargin;
-        loadBtnBounds = juce::Rectangle<int>(tx, ty, btnW, btnH);
-        tx += btnW + tmargin;
-        undoBtnBounds = juce::Rectangle<int>(tx, ty, btnW, btnH);
-        tx += btnW + tmargin;
-        randBtnBounds = juce::Rectangle<int>(tx, ty, btnW, btnH);
+        saveBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
+        tx += btnSize + tmargin;
+        loadBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
+        tx += btnSize + tmargin;
+        undoBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
+        tx += btnSize + tmargin;
+        randBtnBounds = juce::Rectangle<int>(tx, ty, btnSize, btnSize);
     }
 }
 
@@ -571,15 +577,11 @@ void FaceplateView::drawPresetStrip(juce::Graphics& g)
         g.drawText(juce::String(juce::CharPointer_UTF8("\xe2\x80\xba")), chevRightBounds, juce::Justification::centred,
                    false); // ›
 
-    // A / B two-state compare buttons (lit amber when active).
+    // A / B two-state compare buttons.
+    // The baked plate supplies the visual wells/squares for A/B (and the preset name LED area).
+    // C++ draws only the letters (no more floating button bodies). Lit state via brighter text.
     auto drawAB = [&](const juce::Rectangle<int>& b, char lab, bool isLit)
     {
-        const auto bf = b.toFloat().reduced(1.0f);
-        const auto fill = isLit ? juce::Colour(0xffaa5500) : juce::Colour(0xff232527);
-        g.setColour(fill);
-        g.fillRoundedRectangle(bf, 2.0f);
-        g.setColour(juce::Colour(0xff111111).withAlpha(0.65f));
-        g.drawRoundedRectangle(bf.reduced(0.3f), 2.0f, 0.7f);
         g.setColour(isLit ? juce::Colour(0xffffe0a0) : juce::Colour(0xffc9c6be));
         const float abFont = juce::jmax(7.0f, (float)b.getHeight() * 0.58f);
         g.setFont(juce::Font(juce::FontOptions(abFont).withStyle("Bold")));
@@ -594,19 +596,17 @@ void FaceplateView::drawTransportTray(juce::Graphics& g)
     if (transportBounds.isEmpty())
         return;
 
-    // No tray-wide background fill here — drawFooterBay() supplies the single recess. Each button
-    // below is just its own control face (the round/util button body), so they seat inside the bay.
+    // The baked plate provides the round "sphere" wells for the 4 transport buttons (S L ↺ R)
+    // inside the continuous machined footer trough (drawn by drawFooterBay).
+    // C++ must NOT draw its own button bodies (no more floating dark rounded rects over the baked wells).
+    // We only draw the labels, centered on the baked wells.
+    // The individual *BtnBounds (set in resized()) must be aligned to the baked well centers/sizes.
     auto drawTBtn = [&](const juce::Rectangle<int>& b, const juce::String& label)
     {
         if (b.isEmpty())
             return;
-        const auto bf = b.toFloat().reduced(1.0f);
-        // Recessed button body on the bay floor (control-level inset; kept).
-        g.setColour(juce::Colour(0xff0f0f11).withAlpha(0.82f));
-        g.fillRoundedRectangle(bf, 3.0f);
-        g.setColour(juce::Colour(0xff9aa0a3).withAlpha(0.35f));
-        g.drawRoundedRectangle(bf.reduced(0.4f), 3.0f, 0.6f);
-        // Label (affordance symbol or letter; small to fit 4 across 264 ref).
+        // No body fill or stroke — the baked plate supplies the round well visual.
+        // Label only (small bold engraved style to read on the dark well).
         g.setColour(juce::Colour(0xffc9c6be));
         const float tf = juce::jmax(6.0f, (float)b.getHeight() * 0.42f);
         g.setFont(juce::Font(juce::FontOptions(tf).withStyle("Bold")));
