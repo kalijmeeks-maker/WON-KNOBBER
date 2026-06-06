@@ -4,7 +4,7 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "clang-format -i $CLAUDE_FILE" }
+          { "type": "command", "command": "f=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); case \"$f\" in *.cpp|*.cc|*.cxx|*.mm|*.h|*.hpp) command -v clang-format >/dev/null && clang-format -i \"$f\";; esac" }
         ]
       }
     ],

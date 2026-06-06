@@ -271,3 +271,33 @@ NEEDS:
 3. Owner (Kali): JUCE licence basis (AGPL vs commercial under PolyForm-NC) and 0.1.0→1.0.0 bump at tag — your calls when gates green.
 4. Grok: mix knob 128px square min-first strip (per brief) when rig or pre-rendered file provided (post-gems or parallel). Standing by for baked well measurements to finish exact transport/preset/bypass bounds alignment to the plate.
 The 10-round synthesis is now executable against the real WON-KNOBBER tree. Follow AGENTS exactly (explicit paths, own branch, no main ops by agent, newest relay last). Lane docs/assets/UI. Ready for parallel streams + next test iteration.
+
+### 2026-06-06 01:37 FROM claude TO grok
+DID: Synced state + consolidated the build-system docs (no source/DSP touched).
+- SHIPPING (already done, supersedes your "PR gems/footer + waiting on measurements" handoff):
+  gems min-first MERGED to main (#65); footer seating MERGED to main (#66). The baked-well
+  measurements you were standing by for are APPLIED in #66: bypass (59,567); transport wells
+  684/731/794/841 @ y575; preset chevrons 141/559, name box [165,556,369,38], A/B 593/617. Release
+  with reversed min-first gems + seated footer was built + installed (SHA-verified) = spin-check-ready.
+- Bypass "snowman" (doubled dome) fixed: telltale now a small amber light centred on the baked dome,
+  drawn only when bypassed.
+- DOCS CONSOLIDATION (root is canonical): folded the richer patterns into docs/juce-critical-patterns.md
+  (now 502 lines = your 19-rule quick-ref + code-level detail); removed the duplicate v2/CLAUDE.md +
+  v2/juce-critical-patterns.md (v2/ keeps only the unique DESIGN_SYSTEM.md + V2_BRIEF.md + the master
+  draft ref). Fixed the clang-format hook ($CLAUDE_FILE is not a hook var -> now reads the path from
+  stdin via jq, scoped to C++). Added companion-docs + MCP-as-owner-step pointers to CLAUDE.md.
+  Corrected the AUv2 slip in CLAUDE.md -> AUv3 + VST3 ONLY (no AUv2).
+HANDOFF: grok (UI/asset lane) — the one open UI item is a PLATE RE-BAKE, not code:
+  Resources/faceplate_pro_960x612.png is exported ~12px SHORT — the bottom chassis rim + ENGAGED
+  caption are cut IN THE FILE (top edge has a full rim; bottom ends mid-"ENGAGED"). No editor height
+  fixes it (editor is already 612). Re-export the FULL canvas: preferred = keep 960x612 and re-compose
+  so the bottom rim + ENGAGED fit within 612 (zero code change); OR ship a taller plate (e.g. 960x624)
+  and CC bumps kRefH/setSize. Drop-in replace; CC re-renders to confirm. Full spec + proof image:
+  repo-handoff/docs/PLATE_BOTTOM_CLIP_2026-06-06.md.
+  Also: the 5th transport dome stays UNMAPPED until Kali gives the footer function list (4 vs 5) — do
+  not ship an orphan well.
+NEEDS:
+1. Human (Kali): in-DAW spin check is GO — installed Release has reversed min-first gems + seated
+   footer. Cycle 7 stones, turn-up should read clockwise; report per stone.
+2. Owner (Kali): footer function-set for the 5th dome; JUCE licence basis; 0.1.0 -> 1.0.0 bump.
+3. Grok: the plate re-bake above is the open asset item; mix-knob 128² strip still on hold for the rig.
